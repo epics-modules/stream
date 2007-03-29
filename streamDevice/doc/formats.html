@@ -16,8 +16,8 @@
 <p>
 <em>StreamDevice</em> format converters work very similar to the format
 converters of the C functions <em>printf()</em> and <em>scanf()</em>.
-But <em>StreamDevice</em> defines more different conversions and you can
-also define your own converters.
+But <em>StreamDevice</em> provides more different converters and you can
+also write your own converters.
 Formats are specified in <a href="protocol.html#str">quoted strings</a>
 as arguments of <code>out</code> or <code>in</code>
 <a href="protocol.html#cmd">commands</a>.
@@ -33,7 +33,7 @@ A format converter consists of
  <li>Optionally a period character (<code>.</code>) followed
      by an integer <em>precision</em> field (input ony for most formats)</li>
  <li>A conversion character</li>
- <li>Additional information required by some conversion characters</li>
+ <li>Additional information required by some converters</li>
 </ul>
 
 <p>
@@ -46,7 +46,7 @@ number.
 </p>
 <p>
 The <code>#</code> flag may alter the format, depending on the
-conversion character
+converter (see below).
 </p>
 <p>
 The '<code> </code>' (space) and <code>+</code> flags print a space
@@ -88,6 +88,7 @@ The <code>-</code> flag specifies that output is left justified if
 
 <a name="types"></a>
 <h2>2. Data Types and Record Fields</h2>
+<h3>Default fields</h3>
 <p>
 Every conversion character corresponds to one of the data types DOUBLE,
 LONG, ENUM, or STRING.
@@ -100,38 +101,44 @@ Refer to the description of <a href="recordtypes.html">supported record
 types</a> for details.
 </p>
 <p>
-To use other fields or even fields of other records on the same IOC in the 
-conversion, write the field name in parentheses directly after the
-<code>%</code>.
-For example <code>out&nbsp;"%(EGU)s";</code> outputs the <code>EGU</code>
-field formatted as a string.
-Use <code>in&nbsp;"%(<i>otherrecord</i>.VAL)f";</code> to write the floating
-point input value into the <code>VAL</code> field of
-<code><i>otherrecord</i></code>.
-This does not process <code><i>otherrecord</i></code>!
-Set the <code>FLNK</code> to that record to process it.
-It is your responsibility that the data type of the record field matches
-the data type of the conversion or can be converted to a matching type.
-Note that using this syntax is by far not as efficient as using the
-default variable.
-</p>
-<p>
-<em>StreamDevice</em> does not differentiate between <code>float</code>
+<em>StreamDevice</em> makes no difference between <code>float</code>
 and <code>double</code> nor between <code>short</code>, <code>int</code>
 and <code>long</code> values.
 Thus, data type modifiers like <code>l</code> or <code>h</code> do not
 exist in <em>StreamDevice</em> formats.
 </p>
+
+<h3>Accessing record fields directly</h3>
 <p>
-Some formats are not actually conversions.
+To use other fields of the record or even fields of other records on the
+same IOC for the conversion, write the field name in parentheses directly
+after the <code>%</code>.
+For example <code>out&nbsp;"%(EGU)s";</code> outputs the <code>EGU</code>
+field formatted as a string.
+Use <code>in&nbsp;"%(<i>otherrecord</i>.VAL)f";</code> to write the floating
+point input value into the <code>VAL</code> field of
+<code><i>otherrecord</i></code>.
+If <code><i>otherrecord</i></code> is passive and the field has the PP
+attribute (see
+<a href="http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/AppDevManuals/RecordRef/Recordref-1.html"
+target="ex">Record Reference Manual</a>), the record will be processed.
+It is your responsibility that the data type of the record field is
+compatible to the the data type of the converter.
+Note that using this syntax is by far not as efficient as using the
+default field.
+</p>
+
+<h3>Pseudo-converters</h3>
+<p>
+Some formats are not actually converters.
 They format data which is not stored in a record field, such as a
 <a href="#chksum">checksum</a>.
-No data type corresponds to those <em>pseudo-formats</em> and the
+No data type corresponds to those <em>pseudo-converters</em> and the
 <code>(<em>field</em>)</code> syntax cannot be used.
 </p>
 
 <a name="stdd"></a>
-<h2>3. Standard DOUBLE Conversions (<code>%f</code>, <code>%e</code>,
+<h2>3. Standard DOUBLE Converters (<code>%f</code>, <code>%e</code>,
 <code>%E</code>, <code>%g</code>, <code>%G</code>)</h2>
 <p>
 In output, <code>%f</code> prints fixed point, <code>%e</code> prints
@@ -147,7 +154,7 @@ Leading whitespaces are skipped.
 </p>
 
 <a name="stdl"></a>
-<h2>4. Standard LONG Conversions (<code>%d</code>, <code>%i</code>,
+<h2>4. Standard LONG Converters (<code>%d</code>, <code>%i</code>,
 <code>%u</code>, <code>%o</code>, <code>%x</code>, <code>%X</code>)</h2>
 <p>
 In output, <code>%d</code> and <code>%i</code> print signed decimal,
@@ -169,7 +176,7 @@ Leading whitespaces are skipped.
 </p>
 
 <a name="stds"></a>
-<h2>5. Standard STRING Conversions (<code>%s</code>, <code>%c</code>)</h2>
+<h2>5. Standard STRING Converters (<code>%s</code>, <code>%c</code>)</h2>
 <p>
 In output, <code>%s</code> prints a string.
 If <em>precision</em> is specified, this is the maximum string length.
@@ -187,7 +194,7 @@ The empty string matches.
 </p>
 
 <a name="cset"></a>
-<h2>6. Standard Charset STRING Conversion (<code>%[<em>charset</em>]</code>)</h2>
+<h2>6. Standard Charset STRING Converter (<code>%[<em>charset</em>]</code>)</h2>
 <p>
 This is an input-only format.
 It matches a sequence of characters from <em>charset</em>.
@@ -202,7 +209,7 @@ to <code>z</code>.
 </p>
 
 <a name="enum"></a>
-<h2>7. ENUM Conversion (<code>%{<em>string0</em>|<em>string1</em>|...}</code>)</h2>
+<h2>7. ENUM Converter (<code>%{<em>string0</em>|<em>string1</em>|...}</code>)</h2>
 <p>
 This format maps an unsigned integer value on a set of strings.
 The value 0 corresponds to <em>string0</em> and so on.
@@ -222,7 +229,7 @@ In input, if any of the strings matches the value is set accordingly.
 </p>
 
 <a name="bin"></a>
-<h2>8. Binary LONG Conversion (<code>%b</code>, <code>%B<em>zo</em></code>)</h2>
+<h2>8. Binary LONG Converter (<code>%b</code>, <code>%B<em>zo</em></code>)</h2>
 <p>
 This format prints or scans an unsigned integer represented as a binary
 string (one character per bit).
@@ -251,9 +258,9 @@ one character.
 </p>
 
 <a name="raw"></a>
-<h2>9. Raw LONG Conversion (<code>%r</code>)</h2>
+<h2>9. Raw LONG Converter (<code>%r</code>)</h2>
 <p>
-Raw conversion does not really "convert".
+The raw converter does not really "convert".
 A signed integer value is written or read in the internal
 (usually two's complement) representation of the computer.
 The normal byte order is <em>big endian</em>, i.e. most significant byte
@@ -274,7 +281,7 @@ the least significant bytes are used.
 </p>
 
 <a name="bcd"></a>
-<h2>10. Packed BCD (Binary Coded Decimal) LONG Conversion (<code>%D</code>)</h2>
+<h2>10. Packed BCD (Binary Coded Decimal) LONG Converter (<code>%D</code>)</h2>
 <p>
 Packed BCD is a format where each byte contains two binary coded
 decimal digits (<code>0</code> ... <code>9</code>).
@@ -303,9 +310,9 @@ than 9.
 </p>
 
 <a name="chksum"></a>
-<h2>11. Checksum Pseudo-Conversion (<code>%&lt;<em>checksum</em>&gt;</code>)</h2>
+<h2>11. Checksum Pseudo-Converter (<code>%&lt;<em>checksum</em>&gt;</code>)</h2>
 <p>
-This is not a "conversion", because no user data is converted.
+This is not a normal "converter", because no user data is converted.
 Instead, a checksum is calculated from the input or output.
 The <em>width</em> field is the byte number from which to start
 calculating the checksum.
@@ -315,17 +322,32 @@ The last byte is <em>prec</em> bytes before the checksum (default 0).
 For example in <code>"abcdefg%&lt;xor&gt;"</code> the checksum is calculated
 from <code>abcdefg</code>,
 but in <code>"abcdefg%2.1&lt;xor&gt;"</code> only from <code>cdef</code>.
+</p>
+<p>
 Normally, multi-byte checksums are in <em>big endian</em> byteorder,
 i.e. most significant byte first.
 With the <code>#</code> flag, the byte order is changed to <em>little
 endian</em>, i.e. least significant byte first.
-The <code>0</code> flag changes the checksum representation from
-binary to hexadecimal ASCII (2 bytes per checksum byte).
 </p>
 <p>
-Several different checksum functions are implemented at the moment.
-The name of the checksum function is not case sensitive.
+The <code>0</code> flag changes the checksum representation from
+binary to hexadecimal ASCII (2 bytes per checksum byte).
+<!--
+In output, the case of the ASCII checksum matches the case of first
+letter of the function name.
+E.g. <code>out&nbsp;"123456789%&lt;sum&gt;"</code> writes <code>dd</code>
+but <code>out&nbsp;"123456789%&lt;Sum&gt;"</code> writes <code>DD</code>.
+In input, case is ignored.
+-->
 </p>
+<p>
+In output, the checksum is appended.
+</p>
+<p>
+In input, the next byte or bytes must match the checksum.
+</p>
+
+<h3>Implemented checksum functions</h3>
 <dl>
  <dt><code>%&lt;SUM&gt;</code> or <code>%&lt;SUM8&gt;</code></dt>
   <dd>One byte. The sum of all characters modulo 2<sup>8</sup>.</dd>
@@ -373,15 +395,7 @@ The name of the checksum function is not case sensitive.
  <dt><code>%&lt;ADLER32&gt;</code></dt>
   <dd>Four bytes. The Adler32 checksum according to <a target="ex"
    href="http://www.ietf.org/rfc/rfc1950.txt">RFC 1950</a>.</dd>
- 
 </dl>
-
-<p>
-In output, the checksum is appended.
-</p>
-<p>
-In input, the next byte or bytes must match the checksum.
-</p>
 
 <hr>
 <p align="right"><a href="processing.html">Next: Record Processing</a></p>

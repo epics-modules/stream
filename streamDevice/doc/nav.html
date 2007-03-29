@@ -11,16 +11,19 @@ active="";
 function show(name) {
     var m = document.getElementById(name);
     var b = document.getElementById(name+"Button");
-    if (m.style.display == "none") {
-        if (active != "") { show(active); }
-        m.style.display = "block";
-        b.innerHTML="[&laquo;]";
-        active=name;
-    } else {
-        m.style.display = "none";
-        b.innerHTML="[&raquo;]";
-        active="";
-    }
+    if (active != "") { hide(active); }
+    m.style.display = "block";
+    b.innerHTML="[&laquo;]";
+    b.href="javascript:hide(\'"+name+"\')"
+    active=name;
+}
+function hide(name) {
+    var m = document.getElementById(name);
+    var b = document.getElementById(name+"Button");
+    m.style.display = "none";
+    b.innerHTML="[&raquo;]";
+    b.href="javascript:show(\'"+name+"\')"
+    active="";
 }
 function printview() {
     w = window.open(parent.text.location, "_parent", "dependent=yes,width=800,menubar=yes,toolbar=yes,location=yes");
@@ -180,12 +183,12 @@ h1        {font-size:120%;
     document.writeln('<a href="javascript:printview()">' +
         '<img src="printer.gif" alt="Printer friendly" border=0><br>' +
         '<small>Printer friendly</small></a>');
-    show('setup');
-    show('protocol');
-    show('formats');
-    show('proc');
-    show('records');
-    show('bus');
+    hide('setup');
+    hide('protocol');
+    hide('formats');
+    hide('proc');
+    hide('records');
+    hide('bus');
     chapter=decodeURIComponent(parent.location.search.substr(1));
     if (chapter) parent.text.location.href=chapter;
 //-->

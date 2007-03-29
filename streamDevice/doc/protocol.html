@@ -491,6 +491,11 @@ There is a fixed set of exception handler names starting with
   Called when input does not match in an <code>in</code> command.<br>
   It means that the device has sent something else than what the
   protocol expected.
+  If the handler starts with an <code>in</code> command, then this
+  command reparses the old input from the unsuccessful <code>in</code>.
+  Error messages from the unsuccessful <code>in</code> are suppressed.
+  Nevertheless, the record will end up in <code>INVALID/CALC</code>
+  state (see chapter <a href="processing.html#proc">Record Processing</a>).
  </dd>
  <dt><code>@writetimeout</code></dt>
  <dd>
