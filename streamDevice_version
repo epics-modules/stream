@@ -1,0 +1,2 @@
+2-snapshot20061002_a -- modified from 2-snapshot20061002 by changing "calc.dbd"
+to "calcSupport.dbd" in streamApp/Makefile
