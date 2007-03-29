@@ -446,7 +446,7 @@ long streamGetIointInfo(int cmd, dbCommon *record, IOSCANPVT *ppvt)
     if (cmd == 0)
     {
         debug("streamGetIointInfo: starting protocol\n");
-        /* SCAN has been set to "I/O Intr" */
+        // SCAN has been set to "I/O Intr"
         if (!pstream->startProtocol(Stream::StartAsync))
         {
             error("%s: Can't start \"I/O Intr\" protocol\n",
@@ -455,7 +455,7 @@ long streamGetIointInfo(int cmd, dbCommon *record, IOSCANPVT *ppvt)
     }
     else
     {
-        /* SCAN is no longer "I/O Intr" */
+        // SCAN is no longer "I/O Intr"
         pstream->finishProtocol(Stream::Abort);
     }
     return OK;
@@ -914,11 +914,13 @@ formatValue(const StreamFormat& format, const void* fieldaddress)
     debug("Stream::formatValue(%s, format=%%%c, fieldaddr=%p\n",
         name(), format.conv, fieldaddress);
 
-// --  If SCAN is "I/O Intr" and record has not been processed,     --
-// --  do it now to get the latest value (only for output records?) --
+// --  TO DO: If SCAN is "I/O Intr" and record has not been processed,  --
+// --  do it now to get the latest value (only for output records?)     --
 
     if (fieldaddress)
     {
+        // Format like "%([record.]field)..." has requested to get value
+        // from field of this or other record.
         DBADDR* pdbaddr = (DBADDR*)fieldaddress;
         long i;
         long nelem = pdbaddr->no_elements;
@@ -988,12 +990,17 @@ bool Stream::
 matchValue(const StreamFormat& format, const void* fieldaddress)
 {
     // this function must increase consumedInput
+    // [I use goto and feel very ashamed for it.]
     long consumed;
     long lval;
     double dval;
     char* buffer;
+    int status;
+    
     if (fieldaddress)
     {
+        // Format like "%([record.]field)..." has requested to put value
+        // to field of this or other record.
         DBADDR* pdbaddr = (DBADDR*)fieldaddress;
         long nord;
         long nelem = pdbaddr->no_elements;
@@ -1040,30 +1047,49 @@ matchValue(const StreamFormat& format, const void* fieldaddress)
         }
 noMoreElements:
         if (!nord) return false;
-        if (dbPut(pdbaddr, dbfMapping[format.type],
-            fieldBuffer(), nord) != 0)
+        if (pdbaddr->precord == record)
         {
+            // write into own record, thus don't process it
+            debug("Stream::matchValue(%s): dbPut(%s.%s,...)\n",
+                name(),
+                pdbaddr->precord->name,
+                ((dbFldDes*)pdbaddr->pfldDes)->name);
+            status = dbPut(pdbaddr, dbfMapping[format.type], fieldBuffer(), nord);
+        }
+        else
+        {
+            // write into other record, thus process it
+            debug("Stream::matchValue(%s): dbPutField(%s.%s,...)\n",
+                name(),
+                pdbaddr->precord->name,
+                ((dbFldDes*)pdbaddr->pfldDes)->name);
+            status = dbPutField(pdbaddr, dbfMapping[format.type], fieldBuffer(), nord);
+        }
+        if (status != 0)
+        {
+            const char* putfunc = pdbaddr->precord == record ? "dbPut" : "dbPutField";
+            
             flags &= ~ScanTried;
             switch (format.type)
             {
                 case long_format:
                 case enum_format:
-                    error("%s: dbPut(%s.%s, %s, %li) failed\n",
-                        name(), pdbaddr->precord->name,
+                    error("%s: %s(%s.%s, %s, %li) failed\n",
+                        putfunc, name(), pdbaddr->precord->name,
                         ((dbFldDes*)pdbaddr->pfldDes)->name,
                         pamapdbfType[dbfMapping[format.type]].strvalue,
                         lval);
                     return false;
                 case double_format:
-                    error("%s: dbPut(%s.%s, %s, %#g) failed\n",
-                        name(), pdbaddr->precord->name,
+                    error("%s: %s(%s.%s, %s, %#g) failed\n",
+                        putfunc, name(), pdbaddr->precord->name,
                         ((dbFldDes*)pdbaddr->pfldDes)->name,
                         pamapdbfType[dbfMapping[format.type]].strvalue,
                         dval);
                     return false;
                 case string_format:
-                    error("%s: dbPut(%s.%s, %s, \"%s\") failed\n",
-                        name(), pdbaddr->precord->name,
+                    error("%s: %s(%s.%s, %s, \"%s\") failed\n",
+                        putfunc, name(), pdbaddr->precord->name,
                         ((dbFldDes*)pdbaddr->pfldDes)->name,
                         pamapdbfType[dbfMapping[format.type]].strvalue,
                         buffer);
@@ -1074,7 +1100,7 @@ noMoreElements:
         }
         return true;
     }
-    // no fieldaddress
+    // no fieldaddress (the "normal" case)
     format_s fmt;
     fmt.type = dbfMapping[format.type];
     fmt.priv = &format;

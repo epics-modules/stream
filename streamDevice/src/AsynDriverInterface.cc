@@ -198,7 +198,7 @@ class AsynDriverInterface : StreamBusInterface
     void connectHandler();
     void disconnectHandler();
     bool connectToAsynPort();
-    void asynReadHandler(char *data, size_t numchars);
+    void asynReadHandler(char *data, size_t numchars, int eomReason);
     asynQueuePriority priority() {
         return static_cast<asynQueuePriority>
             (StreamBusInterface::priority());
@@ -599,12 +599,12 @@ writeHandler()
             writeCallback(ioTimeout);
             return;
         case asynOverflow:
-            error("%s: asynOverflow: %s\n",
+            error("%s: asynOverflow in write: %s\n",
                 clientName(), pasynUser->errorMessage);
             writeCallback(ioFault);
             return;
         case asynError:
-            error("%s: asynError: %s\n",
+            error("%s: asynError in write: %s\n",
                 clientName(), pasynUser->errorMessage);
             writeCallback(ioFault);
             return;
@@ -645,7 +645,9 @@ readRequest(unsigned long replyTimeout_ms, unsigned long readTimeout_ms,
             clientName(), pasynUser->errorMessage);
         return false;
     }
-    // continues with handleRequest() or handleTimeout()
+    // continues with:
+    //    handleRequest() -> readHandler() -> readCallback()
+    // or handleTimeout() -> readCallback()
     return true;
 }
 
@@ -657,12 +659,25 @@ readHandler()
     debug("AsynDriverInterface::readHandler(%s) eoslen=%d:%s\n",
         clientName(), eoslen, StreamBuffer(eos, eoslen).expand()());
 #endif
-    while (eoslen >= 0)
+    
+    // device (e.g. GPIB) might not accept full eos length
+    int deveoslen = eoslen;
+    const char* deveos = eos;
+    while (deveoslen >= 0)
     {
         if (pasynOctet->setInputEos(pvtOctet, pasynUser,
-            eos, eoslen) == asynSuccess) break;
-        eos++; eoslen--;
-        if (eoslen < 0)
+            deveos, deveoslen) == asynSuccess)
+        {
+#ifndef NO_TEMPORARY
+            debug("AsynDriverInterface::readHandler(%s) "
+                "input EOS set to %s\n",
+                clientName(),
+                StreamBuffer(deveos, deveoslen).expand()());
+#endif
+            break;
+        }
+        deveos++; deveoslen--;
+        if (deveoslen < 0)
         {
             error("%s: warning: pasynOctet->setInputEos() failed: %s\n",
                 clientName(), pasynUser->errorMessage);
@@ -706,20 +721,41 @@ readHandler()
                 clientName(), bytesToRead, pasynUser->timeout);
         status = pasynOctet->read(pvtOctet, pasynUser,
             buffer, bytesToRead, &received, &eomReason);
-
+        // pasynOctet->read() has already cut off eos.
+        
 #ifndef NO_TEMPORARY
         debug("AsynDriverInterface::readHandler(%s): "
-                "received %d of %d bytes \"%s\" status=%d eomReason=%d\n",
+                "received %d of %d bytes \"%s\" status=%d "
+                "eomReason=%s%s%s%x\n",
             clientName(), received, bytesToRead,
             StreamBuffer(buffer, received).expand()(),
-            status, eomReason);
+            status,
+            eomReason & ASYN_EOM_CNT ? "CNT ": "",
+            eomReason & ASYN_EOM_EOS ? "EOS ": "",
+            eomReason & ASYN_EOM_END ? "END ": "",
+            eomReason);
 #endif
 
         switch (status)
         {
             case asynSuccess:
+            // asynOctet cuts off eos, but:
+            // If eos was longer than the device (e.g. GPIB) can handle,
+            // only a part is cut. If that part matches but the whole eos
+            // does not, it is falsely cut. So what to do?
+            // Restore all eos and leave it to StreamCore to find out
+            // if this was the end of the input.
+                if (eomReason & ASYN_EOM_EOS)
+                {
+                    int i;
+                    for (i = 0; i < deveoslen; i++)
+                    {
+                        buffer[received++] = deveos[i];
+                    }
+                }
+                
                 readMore = readCallback(
-                    eomReason & (ASYN_EOM_END|ASYN_EOM_EOS) ?
+                    eomReason & ASYN_EOM_END ?
                     ioEnd : ioSuccess,
                     buffer, received);
                 break;
@@ -758,13 +794,13 @@ readHandler()
                     inputBuffer.clear().reserve(inputBuffer.capacity()*2);
                 }
                 peeksize = inputBuffer.capacity();
-                // deliver whatever we have
-                error("%s: asynOverflow: %s\n",
+                // deliver whatever we could save
+                error("%s: asynOverflow in read: %s\n",
                     clientName(), pasynUser->errorMessage);
                 readCallback(ioFault, buffer, received);
                 break;
             case asynError:
-                error("%s: asynError: %s\n",
+                error("%s: asynError in read: %s\n",
                     clientName(), pasynUser->errorMessage);
                 readCallback(ioFault, buffer, received);
                 break;
@@ -787,7 +823,7 @@ readHandler()
 }
 
 void intrCallbackOctet(void* /*pvt*/, asynUser *pasynUser,
-    char *data, size_t numchars, int /*eomReason*/)
+    char *data, size_t numchars, int eomReason)
 {
     // we must be very careful not to block in this function
     // we must not call cancelRequest from here!
@@ -802,13 +838,13 @@ void intrCallbackOctet(void* /*pvt*/, asynUser *pasynUser,
         interface->cancelTimer();
     
     // cancel possible read poll
-        interface->asynReadHandler(data, numchars);
+        interface->asynReadHandler(data, numchars, eomReason);
     }
 }
 
 // get asynchronous input
 void AsynDriverInterface::
-asynReadHandler(char *buffer, size_t received)
+asynReadHandler(char *buffer, size_t received, int eomReason)
 {
 #ifndef NO_TEMPORARY
     debug("AsynDriverInterface::asynReadHandler(%s, buffer=\"%s\", "
@@ -820,8 +856,28 @@ asynReadHandler(char *buffer, size_t received)
     long readMore = 1;
     if (received)
     {
+        if (eomReason & ASYN_EOM_EOS)
+        {
+            // We must restore the cut off eos (see receiveHandler()).
+            char asyneos [16]; // I hope that is sufficient
+            int len;
+            asynStatus status;
+            status = pasynOctet->getInputEos(pvtOctet,
+                pasynUser, asyneos, sizeof(asyneos)-1, &len);
+            if (status == asynSuccess)
+            {
+                int i;
+                for (i = 0; i < len; i++)
+                {
+                   buffer[received++] = asyneos[i];
+                }
+            }
+        }
         // process what we got and look if we need more data
-        readMore = readCallback(ioSuccess, buffer, received);
+        readMore = readCallback(
+            eomReason & ASYN_EOM_END ?
+            ioEnd : ioSuccess,
+            buffer, received);
     }
     if (readMore)
     {
@@ -897,7 +953,8 @@ void AsynDriverInterface::
 timerExpired()
 {
     int autoconnect, connected;
-    debug("AsynDriverInterface::timerExpired(%s)\n", clientName());
+    debug("AsynDriverInterface::timerExpired(%s) for %s\n",
+        clientName(), ioActionStr[ioAction]);
     switch (ioAction)
     {
         case ReceiveEvent:

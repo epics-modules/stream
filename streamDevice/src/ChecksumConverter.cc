@@ -25,6 +25,7 @@
 #include <epicsString.h>
 #define strncasecmp epicsStrnCaseCmp
 #endif
+#include <ctype.h>
 
 typedef unsigned long ulong;
 typedef unsigned char uchar;
@@ -425,6 +426,23 @@ static ulong adler32(const uchar* data, ulong len, ulong init)
    return b << 16 | a;
 }
 
+static ulong hexsum(const uchar* data, ulong len, ulong sum)
+{
+    // Add all hex digits, ignore all other bytes.
+    ulong d; 
+    while (len--)
+    {
+        d = toupper(*data++);
+        if (isxdigit(d))
+        {
+            if (isdigit(d)) d -= '0';
+            else d -= 'A' - 0x0A;
+            sum += d;
+        }
+    }
+    return sum;
+}
+
 struct checksum
 {
     const char* name;
@@ -435,6 +453,7 @@ struct checksum
 };
 
 static checksum checksumMap[] =
+// You may add your own checksum functions to this map.
 {
 //    name      func              init        xorout  bytes  chk("123456789")
     {"sum",     sum,              0x00,       0x00,       1}, // 0xDD
@@ -456,7 +475,8 @@ static checksum checksumMap[] =
     {"crc32",   crc_0x04C11DB7,   0xFFFFFFFF, 0xFFFFFFFF, 4}, // 0xFC891918
     {"crc32r",  crc_0x04C11DB7_r, 0xFFFFFFFF, 0xFFFFFFFF, 4}, // 0xCBF43926
     {"jamcrc",  crc_0x04C11DB7_r, 0xFFFFFFFF, 0x00000000, 4}, // 0x340BC6D9
-    {"adler32", adler32,          0x00000001, 0x00000000, 4}  // 0x091E01DE
+    {"adler32", adler32,          0x00000001, 0x00000000, 4}, // 0x091E01DE
+    {"hexsum8", hexsum,           0x00,       0x00,       1}  // 0x2D
 };
 
 static ulong mask[5] = {0, 0xFF, 0xFFFF, 0xFFFFFF, 0xFFFFFFFF};

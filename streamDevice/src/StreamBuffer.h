@@ -46,7 +46,7 @@ public:
     // * Any index parameter (long) can be negative
     //   meaning "count from end" (-1 is the last byte)
     // * Any returned char* pointer becomes invalid when
-    //   the StreamBuffer is altered.
+    //   the StreamBuffer is modified.
 
     StreamBuffer()
         {init(NULL, 0);}

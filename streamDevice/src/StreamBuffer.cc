@@ -63,7 +63,24 @@ grow(long minsize)
     if (minsize > 10000)
     {
         // crude trap against infinite grow
-        error ("StreamBuffer exploded (over 10000 chars). Exiting\n");
+        error ("StreamBuffer exploded growing from %ld to %ld chars. Exiting\n",
+            cap, minsize);
+        int i;
+        char c;
+        fprintf(stderr, "String contents (len=%ld):\n", len);
+        for (i = offs; i < len; i++)
+        {
+            c = buffer[i];
+            if ((c & 0x7f) < 0x20 || (c & 0x7f) == 0x7f)
+            {
+                fprintf(stderr, "<%02x>", c & 0xff);
+            }
+            else
+            {
+                fprintf(stderr, "%c", c);
+            }
+        }
+        fprintf(stderr, "\n");
         abort();
     }
     if (minsize < cap)
@@ -253,15 +270,17 @@ StreamBuffer StreamBuffer::expand(long start, long length) const
     start += offs;
     end += offs;
     long i;
+    char c;
     for (i = start; i < end; i++)
     {
-        if ((buffer[i] & 0x7f) < 0x20 || buffer[i] == 0x7f)
+        c = buffer[i];
+        if ((c & 0x7f) < 0x20 || (c & 0x7f) == 0x7f)
         {
-            result.printf("<%02x>", buffer[i] & 0xff);
+            result.printf("<%02x>", c & 0xff);
         }
         else
         {
-            result.append(buffer[i]);
+            result.append(c);
         }
     }
     return result;

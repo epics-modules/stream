@@ -450,6 +450,8 @@ finishProtocol(ProtocolResult status)
     }
     else
     {
+        // save original error status
+        runningHandler = status;
         // look for error handler
         char* handler;
         switch (status)
@@ -463,6 +465,23 @@ finishProtocol(ProtocolResult status)
             case ReadTimeout:
                 handler = onReadTimeout();
                 break;
+            case ScanError:
+                handler = onMismatch();
+                /* reparse old input if first command in handler is 'in' */
+                if (*handler == in_cmd)
+                {
+                    debug("reparsing input \"%s\"\n",
+                        inputLine.expand()());
+                    commandIndex = handler + 1;
+                    if (matchInput())
+                    {
+                        evalCommand();
+                        return;
+                    }
+                    handler = NULL;
+                    break;
+                }
+                break;
             case Abort:
                 // cancel anything running
                 busCancelAll();
@@ -474,8 +493,7 @@ finishProtocol(ProtocolResult status)
         }
         if (handler)
         {
-            // save original error status
-            runningHandler = status;
+            debug("starting exception handler\n");
             // execute handler
             commandIndex = handler;
             evalCommand();
@@ -1010,6 +1028,10 @@ readCallback(StreamBusInterface::IoStatus status,
 bool StreamCore::
 matchInput()
 {
+    /* Don't write messages about matching errors if either in asynchronous
+       mode (then we just wait for new matching input) or if @mismatch handler
+       is installed and starts with 'in' (then we reparse the input).
+    */
     char command;
     const char* formatstring;
     
@@ -1070,7 +1092,7 @@ matchInput()
                     }
                     if (consumed < 0)
                     {
-                        if (!(flags & AsyncMode))
+                        if (!(flags & AsyncMode) && onMismatch[0] != in_cmd)
                         {
                             error("%s: Input \"%s%s\" does not match format %%%s\n",
                                 name(), inputLine.expand(consumedInput, 20)(),
@@ -1085,7 +1107,7 @@ matchInput()
                 flags &= ~Separator;
                 if (!matchValue(fmt, fieldAddress ? fieldAddress() : NULL))
                 {
-                    if (!(flags & AsyncMode))
+                    if (!(flags & AsyncMode) && onMismatch[0] != in_cmd)
                     {
                         if (flags & ScanTried)
                             error("%s: Input \"%s%s\" does not match format %%%s\n",
@@ -1115,7 +1137,7 @@ matchInput()
                 {
                     int i = 0;
                     while (commandIndex[i] >= ' ') i++;
-                    if (!(flags & AsyncMode))
+                    if (!(flags & AsyncMode) && onMismatch[0] != in_cmd)
                     {
                         error("%s: Input \"%s%s\" too short."
                               " No match for \"%s\"\n",
@@ -1128,7 +1150,7 @@ matchInput()
                 }
                 if (command != inputLine[consumedInput])
                 {
-                    if (!(flags & AsyncMode))
+                    if (!(flags & AsyncMode) && onMismatch[0] != in_cmd)
                     {
                         int i = 0;
                         while (commandIndex[i] >= ' ') i++;
@@ -1153,7 +1175,7 @@ matchInput()
     long surplus = inputLine.length()-consumedInput;
     if (surplus > 0 && !(flags & IgnoreExtraInput))
     {
-        if (!(flags & AsyncMode))
+        if (!(flags & AsyncMode) && onMismatch[0] != in_cmd)
         {
             error("%s: %ld byte%s surplus input \"%s%s\"\n",
                 name(), surplus, surplus==1 ? "" : "s",
