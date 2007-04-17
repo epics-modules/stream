@@ -5,7 +5,7 @@
 # This requires the naming conventions
 # dev$(RECORD)Stream.c
 
-RECORDS += aai aao
+#RECORDS += aai aao
 RECORDS += ao ai
 RECORDS += bo bi
 RECORDS += mbbo mbbi
