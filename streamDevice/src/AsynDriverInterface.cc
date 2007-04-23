@@ -108,11 +108,11 @@ extern "C" {
 static void handleRequest(asynUser*);
 static void handleTimeout(asynUser*);
 static void intrCallbackOctet(void* pvt, asynUser *pasynUser,
-    char *data, size_t numchars, int eomReason, asynStatus status);
+    char *data, size_t numchars, int eomReason);
 static void intrCallbackInt32(void* pvt, asynUser *pasynUser,
-    epicsInt32 data, asynStatus status);
+    epicsInt32 data);
 static void intrCallbackUInt32(void* pvt, asynUser *pasynUser,
-    epicsUInt32 data, asynStatus status);
+    epicsUInt32 data);
 }
 
 enum IoAction {
@@ -225,11 +225,11 @@ class AsynDriverInterface : StreamBusInterface
     friend void handleRequest(asynUser*);
     friend void handleTimeout(asynUser*);
     friend void intrCallbackOctet(void* pvt, asynUser *pasynUser,
-        char *data, size_t numchars, int eomReason, asynStatus status);
+        char *data, size_t numchars, int eomReason);
     friend void intrCallbackInt32(void* pvt, asynUser *pasynUser,
-        epicsInt32 data, asynStatus status);
+        epicsInt32 data);
     friend void intrCallbackUInt32(void* pvt, asynUser *pasynUser,
-        epicsUInt32 data, asynStatus status);
+        epicsUInt32 data);
 public:
     // static creator method
     static StreamBusInterface* getBusInterface(Client* client,
@@ -823,7 +823,7 @@ readHandler()
 }
 
 void intrCallbackOctet(void* /*pvt*/, asynUser *pasynUser,
-    char *data, size_t numchars, int eomReason, asynStatus status)
+    char *data, size_t numchars, int eomReason)
 {
     // we must be very careful not to block in this function
     // we must not call cancelRequest from here!
@@ -910,8 +910,7 @@ acceptEvent(unsigned long mask, unsigned long replytimeout_ms)
     return true;
 }
 
-void intrCallbackInt32(void* /*pvt*/, asynUser *pasynUser, epicsInt32 data,
-                       asynStatus status)
+void intrCallbackInt32(void* /*pvt*/, asynUser *pasynUser, epicsInt32 data)
 {
     AsynDriverInterface* interface =
         static_cast<AsynDriverInterface*>(pasynUser->userPvt);
@@ -931,7 +930,7 @@ void intrCallbackInt32(void* /*pvt*/, asynUser *pasynUser, epicsInt32 data,
 }
 
 void intrCallbackUInt32(void* /*pvt*/, asynUser *pasynUser,
-    epicsUInt32 data, asynStatus status)
+    epicsUInt32 data)
 {
     AsynDriverInterface* interface =
         static_cast<AsynDriverInterface*>(pasynUser->userPvt);
