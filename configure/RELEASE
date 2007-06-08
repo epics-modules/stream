@@ -8,12 +8,12 @@
 # each time EPICS_BASE, SNCSEQ, or any other external
 # module defined in the RELEASE file is rebuilt.
 
-SUPPORT=/home/mooney/epics/synApps/support
-ASYN=/home/mooney/epics/synApps/support/asyn/4-6
-CALC=/home/mooney/epics/synApps/support/calc
-SSCAN=/home/mooney/epics/synApps/support/sscan
+SUPPORT=/corvette/home/epics/devel
+ASYN=/corvette/home/epics/devel/asyn/4-9beta
+CALC=/corvette/home/epics/devel/calc/2-6-4beta
+SSCAN=/corvette/home/epics/devel/sscan/2-5-6beta
 
 # EPICS_BASE usually appears last so other apps can override stuff:
-EPICS_BASE=/home/mooney/epics/base-3.14.8.2
+EPICS_BASE=/corvette/usr/local/epics/base-3.14.8.2
 
 TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top

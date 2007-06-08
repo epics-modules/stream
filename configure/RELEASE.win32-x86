@@ -9,10 +9,10 @@
 # module defined in the RELEASE file is rebuilt.
 
 SUPPORT=J:/epics/devel
-ASYN=J:/epics/devel/asyn/4-4beta
-CALC=J:/epics/devel/calc/2-6beta
-SSCAN=J:/epics/devel/sscan/2-5-2beta
+ASYN=J:/epics/devel/asyn/4-9beta
+CALC=J:/epics/devel/calc/2-6-4beta
+SSCAN=J:/epics/devel/sscan/2-5-6beta
 # EPICS_BASE usually appears last so other apps can override stuff:
-EPICS_BASE=H:/epics/base-3.14.9beta
+EPICS_BASE=H:/epics/base-3.14.8.2
 
 TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
