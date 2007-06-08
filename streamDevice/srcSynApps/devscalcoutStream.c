@@ -1,7 +1,7 @@
 /***************************************************************
-* Stream Device record interface for calcout records           *
+* Stream Device record interface for scalcout records          *
 *                                                              *
-* (C) 2005 Dirk Zimoch (dirk.zimoch@psi.ch)                    *
+* (C) 2006 Dirk Zimoch (dirk.zimoch@psi.ch)                    *
 *                                                              *
 * This is an EPICS record Interface for StreamDevice.          *
 * Please refer to the HTML files in ../doc/ for a detailed     *
@@ -23,12 +23,12 @@
 
 /* scalcout record has a bug: it never calls init_record
    of the device support.
-   Fix: sCalcoutRecord.c line 277 (end of init_record) add
+   Fix: sCalcoutRecord.c, end of init_record() add
   
         if(pscalcoutDSET->init_record ) {
 	    return (*pscalcoutDSET->init_record)(pcalc);
         }
-
+   The bug has been fixed in version 2-6-1.
 */
 
 static long readData (dbCommon *record, format_t *format)
