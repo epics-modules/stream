@@ -112,13 +112,14 @@ append(const void* s, long size)
 {
     if (size <= 0)
     {
-        // append negative bytes? let's delete some
+        // append negative number of bytes? let's delete some
+        if (size < -len) size = -len;
         memset (buffer+offs+len+size, 0, -size);
     }
     else
     {
         check(size);
-        memcpy(buffer+offs+len, static_cast<const char*>(s), size);
+        memcpy(buffer+offs+len, s, size);
     }
     len += size;
     return *this;
@@ -133,7 +134,7 @@ find(const void* m, long size, long start) const
         if (start < 0) start = 0;
     }
     if (start >= len-size+1) return -1; // find nothing after end
-    if (!m || size <= 0) return start; // find empty string
+    if (!m || size <= 0) return start; // find empty string at start
     const char* s = static_cast<const char*>(m);
     char* b = buffer+offs;
     char* p = b+start;

@@ -26,6 +26,11 @@
 StreamFormatConverter* StreamFormatConverter::
 registered [256];
 
+StreamFormatConverter::
+~StreamFormatConverter()
+{
+}
+
 void StreamFormatConverter::
 provides(const char* name, const char* provided)
 {

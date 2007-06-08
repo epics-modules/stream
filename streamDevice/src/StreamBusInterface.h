@@ -22,28 +22,34 @@
 
 #include <stddef.h>
 
+enum StreamIoStatus {
+    StreamIoSuccess, StreamIoTimeout, StreamIoNoReply,
+    StreamIoEnd, StreamIoFault
+};
+
+extern const char* StreamIoStatusStr[];
+
 class StreamBusInterface
 {
 public:
-    enum IoStatus {ioSuccess, ioTimeout, ioNoReply, ioEnd, ioFault};
 
     class Client
     {
         friend class StreamBusInterface;
-        virtual void lockCallback(IoStatus status) = 0;
-        virtual void writeCallback(IoStatus status);
-        virtual long readCallback(IoStatus status,
+        virtual void lockCallback(StreamIoStatus status) = 0;
+        virtual void writeCallback(StreamIoStatus status);
+        virtual long readCallback(StreamIoStatus status,
             const void* input, long size);
-        virtual void eventCallback(IoStatus status);
-        virtual void connectCallback(IoStatus status);
+        virtual void eventCallback(StreamIoStatus status);
+        virtual void connectCallback(StreamIoStatus status);
         virtual long priority();
         virtual const char* name() = 0;
-
+        virtual const char* getInTerminator(size_t& length) = 0;
+        virtual const char* getOutTerminator(size_t& length) = 0;
+    public:
+        virtual ~Client();
     protected:
         StreamBusInterface* businterface;
-        bool busSetEos(const char* eos, size_t eoslen) {
-            return businterface->setEos(eos, eoslen);
-        }
         bool busSupportsEvent() {
             return businterface->supportsEvent();
         }
@@ -73,8 +79,8 @@ public:
             return businterface->readRequest(replytimeout_ms,
                 readtimeout_ms, expectedLength, async);
         }
-        void busCancelAll() {
-            businterface->cancelAll();
+        void busFinish() {
+            businterface->finish();
         }
         bool busConnectRequest(unsigned long timeout_ms) {
             return businterface->connectRequest(timeout_ms);
@@ -93,22 +99,24 @@ public:
     virtual ~StreamBusInterface() {};
 
 protected:
-    const char* eos;
-    size_t eoslen;
     StreamBusInterface(Client* client);
     
 // map client functions into StreamBusInterface namespace
-    void lockCallback(IoStatus status)
+    void lockCallback(StreamIoStatus status)
         { client->lockCallback(status); }
-    void writeCallback(IoStatus status)
+    void writeCallback(StreamIoStatus status)
         { client->writeCallback(status); }
-    long readCallback(IoStatus status,
+    long readCallback(StreamIoStatus status,
         const void* input = NULL, long size = 0)
         { return client->readCallback(status, input, size); }
-    void eventCallback(IoStatus status)
+    void eventCallback(StreamIoStatus status)
         { client->eventCallback(status); }
-    void connectCallback(IoStatus status)
+    void connectCallback(StreamIoStatus status)
         { client->connectCallback(status); }
+    const char* getInTerminator(size_t& length)
+        { return client->getInTerminator(length); }
+    const char* getOutTerminator(size_t& length)
+        { return client->getOutTerminator(length); }
     long priority() { return client->priority(); }
     const char* clientName() { return client->name(); }
 
@@ -118,7 +126,6 @@ protected:
     virtual bool readRequest(unsigned long replytimeout_ms,
         unsigned long readtimeout_ms, long expectedLength,
         bool async);
-    virtual bool setEos(const char* eos, size_t eoslen);
     virtual bool supportsEvent(); // defaults to false
     virtual bool supportsAsyncRead(); // defaults to false
     virtual bool acceptEvent(unsigned long mask, // implement if
@@ -126,7 +133,7 @@ protected:
     virtual void release();
     virtual bool connectRequest(unsigned long connecttimeout_ms);
     virtual bool disconnect();
-    virtual void cancelAll();
+    virtual void finish();
 
 // pure virtual
     virtual bool lockRequest(unsigned long timeout_ms) = 0;
@@ -149,6 +156,7 @@ class StreamBusInterfaceRegistrarBase
 protected:
     const char* name;
     StreamBusInterfaceRegistrarBase(const char* name);
+    virtual ~StreamBusInterfaceRegistrarBase();
 };
     
 template <class C>

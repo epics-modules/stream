@@ -35,18 +35,22 @@ function printview() {
 body      {margin:0px 0px 0px 0px;
            font-family:sans-serif;
            font-weight:bold;
-           font-size:small;}
-a:link    {color:#333333;text-decoration:none;}
-a:visited {color:#333333;text-decoration:none;}
-a:hover   {color:#FF0000;text-decoration:none;}
-a:active  {color:#FF0000;text-decoration:none;}
+           font-size:13px;}
+a         {text-decoration:none;}
+a:link    {color:#333333;}
+a:visited {color:#333333;}
+a:hover   {color:#FF0000;}
+a:active  {color:#FF0000;}
 .top      {margin-bottom: 0px;
            margin-top: 10px;
            border-bottom: solid 1px black;}
-.sub      {margin-left: 10px;
-           margin-top: 5px;
-           line-height:120%;}
-.subsub    {margin-left: 15px;
+.top ul   {margin-left: 5px;
+           margin-top: 2px;
+           margin-bottom: 2px;
+           font-size:95%;
+           line-height:120%;
+           padding-left:1em;}
+.subsub   {margin-left: 15px;
            line-height:120%;
            font-size:80%;}
 h1        {font-size:120%;
@@ -69,87 +73,100 @@ h1        {font-size:120%;
  <div class="top">
   <a target="text" href="setup.html">Setup</a>
   <a href="javascript:show('setup')" id="setupButton"></a>
-  <div id="setup" class="sub">
-   <a target="text" href="setup.html#pre">Prerequisites</a><br>
-   <div class="subsub">
-    <a target="text" href="epics3_13.html">Using EPICS 3.13</a><br>
-   </div>
-   <a target="text" href="setup.html#lib">Build Library</a><br>
-   <a target="text" href="setup.html#app">Build Application</a><br>
-   <a target="text" href="setup.html#sta">Startup Script</a><br>
-   <a target="text" href="setup.html#pro">Protocol File</a><br>
-   <div class="subsub">
-    <a target="text" href="setup.html#reload">Reloading</a><br>
-   </div>
-   <a target="text" href="setup.html#rec">Records</a><br>
-  </div>
+  <ul id="setup">
+   <li><a target="text" href="setup.html#pre">Prerequisites</a>
+    <ul>
+     <li><a target="text" href="epics3_13.html">Using EPICS 3.13</a></li>
+   </ul></li>
+   <li><a target="text" href="setup.html#lib">Build Library</a></li>
+   <li><a target="text" href="setup.html#app">Build Application</a></li>
+   <li><a target="text" href="setup.html#sta">Startup Script</a></li>
+   <li><a target="text" href="setup.html#pro">Protocol File</a>
+    <ul>
+     <li><a target="text" href="setup.html#reload">Reloading</a></li>
+    </ul></li>
+   <li><a target="text" href="setup.html#rec">Records</a></li>
+  </ul>
  </div>
  <div class="top">
   <a target="text" href="protocol.html">Protocol Files</a>
   <a href="javascript:show('protocol')" id="protocolButton"></a>
-  <div id="protocol" class="sub">
-   <a target="text" href="protocol.html#gen">General</a><br>
-   <a target="text" href="protocol.html#proto">Protocols</a><br>
-   <a target="text" href="protocol.html#cmd">Commands</a><br>
-   <a target="text" href="protocol.html#str">Strings</a><br>
-   <a target="text" href="protocol.html#var">Variables</a><br>
-   <div class="subsub">
-    <a target="text" href="protocol.html#sysvar">System variables</a><br>
-    <a target="text" href="protocol.html#argvar">Protocol Arguments</a><br>
-    <a target="text" href="protocol.html#usrvar">User variables</a><br>
-   </div>
-   <a target="text" href="protocol.html#except">Exception Handlers</a><br>
-  </div>
+  <ul id="protocol">
+   <li><a target="text" href="protocol.html#gen">General</a></li>
+   <li><a target="text" href="protocol.html#proto">Protocols</a></li>
+   <li><a target="text" href="protocol.html#cmd">Commands</a></li>
+   <li><a target="text" href="protocol.html#str">Strings</a></li>
+   <li><a target="text" href="protocol.html#var">Variables</a>
+    <ul>
+     <li><a target="text" href="protocol.html#sysvar">System variables</a></li>
+     <li><a target="text" href="protocol.html#argvar">Protocol Arguments</a></li>
+     <li><a target="text" href="protocol.html#usrvar">User variables</a></li>
+    </ul></li>
+   <li><a target="text" href="protocol.html#except">Exception Handlers</a></li>
+  </ul>
  </div>
  <div class="top">
   <a target="text" href="formats.html">Format Converters</a>
   <a href="javascript:show('formats')" id="formatsButton"></a>
-  <div id="formats" class="sub">
-   <a target="text" href="formats.html#syntax">Syntax</a><br>
-   <a target="text" href="formats.html#types">Types &amp; Fields</a><br>
-   <a target="text" href="formats.html#stdd">%f %e %g</a><br>
-   <a target="text" href="formats.html#stdl">%i %d %u %o %x</a><br>
-   <a target="text" href="formats.html#stds">%s %c</a><br>
-   <a target="text" href="formats.html#cset">%[<em>charset</em>]</a><br>
-   <a target="text" href="formats.html#enum">%{<em>s0</em>|<em>s1</em>|...}</a><br>
-   <a target="text" href="formats.html#bin">%b %B</a><br>
-   <a target="text" href="formats.html#raw">%r</a><br>
-   <a target="text" href="formats.html#bcd">%D</a><br>
-   <a target="text" href="formats.html#chksum">%&lt;<em>checksum</em>&gt;</a><br>
-  </div>
+  <ul id="formats">
+   <li><a target="text" href="formats.html#syntax">Syntax</a></li>
+   <li><a target="text" href="formats.html#types">Types &amp; Fields</a></li>
+   <li><a target="text" href="formats.html#stdd">%f %e %g</a></li>
+   <li><a target="text" href="formats.html#stdl">%i %d %u %o %x</a></li>
+   <li><a target="text" href="formats.html#stds">%s %c</a></li>
+   <li><a target="text" href="formats.html#cset">%[<em>charset</em>]</a></li>
+   <li><a target="text" href="formats.html#enum">%{<em>s0</em>|<em>s1</em>|...}</a></li>
+   <li><a target="text" href="formats.html#bin">%b %B</a></li>
+   <li><a target="text" href="formats.html#raw">%r</a></li>
+   <li><a target="text" href="formats.html#bcd">%D</a></li>
+   <li><a target="text" href="formats.html#chksum">%&lt;<em>checksum</em>&gt;</a></li>
+  </ul>
  </div>
  <div class="top">
   <a target="text" href="processing.html">Record Processing</a>
   <a href="javascript:show('proc')" id="procButton"></a>
-  <div id="proc" class="sub">
-   <a target="text" href="processing.html#proc">Normal Processing</a><br>
-   <a target="text" href="processing.html#init">Initialization</a><br>
-   <a target="text" href="processing.html#iointr">I/O Intr</a><br>
-  </div>
+  <ul id="proc">
+   <li><a target="text" href="processing.html#proc">Normal Processing</a></li>
+   <li><a target="text" href="processing.html#init">Initialization</a></li>
+   <li><a target="text" href="processing.html#iointr">I/O Intr</a></li>
+  </ul>
  </div>
  <div class="top">
   <a target="text" href="recordtypes.html">Record Types</a>
   <a href="javascript:show('records')" id="recordsButton"></a>
-  <div id="records" class="sub">
-   <a target="text" href="aai.html">aai</a><br>
-   <a target="text" href="aao.html">aao</a><br>
-   <a target="text" href="ai.html">ai</a><br>
-   <a target="text" href="ao.html">ao</a><br>
-   <a target="text" href="bi.html">bi</a><br>
-   <a target="text" href="bo.html">bo</a><br>
-   <a target="text" href="mbbi.html">mbbi</a><br>
-   <a target="text" href="mbbo.html">mbbo</a><br>
-   <a target="text" href="mbbiDirect.html">mbbiDirect</a><br>
-   <a target="text" href="mbboDirect.html">mbboDirect</a><br>
-   <a target="text" href="stringin.html">stringin</a><br>
-   <a target="text" href="stringout.html">stringout</a><br>
-   <a target="text" href="longin.html">longin</a><br>
-   <a target="text" href="longout.html">longout</a><br>
-   <a target="text" href="waveform.html">waveform</a><br>
-   <a target="text" href="calcout.html">calcout</a><br>
-   <a target="text" href="scalcout.html">scalcout</a><br>
-  </div>
+  <ul id="records" class="sub">
+   <li><a target="text" href="aai.html">aai</a></li>
+   <li><a target="text" href="aao.html">aao</a></li>
+   <li><a target="text" href="ai.html">ai</a></li>
+   <li><a target="text" href="ao.html">ao</a></li>
+   <li><a target="text" href="bi.html">bi</a></li>
+   <li><a target="text" href="bo.html">bo</a></li>
+   <li><a target="text" href="mbbi.html">mbbi</a></li>
+   <li><a target="text" href="mbbo.html">mbbo</a></li>
+   <li><a target="text" href="mbbiDirect.html">mbbiDirect</a></li>
+   <li><a target="text" href="mbboDirect.html">mbboDirect</a></li>
+   <li><a target="text" href="stringin.html">stringin</a></li>
+   <li><a target="text" href="stringout.html">stringout</a></li>
+   <li><a target="text" href="longin.html">longin</a></li>
+   <li><a target="text" href="longout.html">longout</a></li>
+   <li><a target="text" href="waveform.html">waveform</a></li>
+   <li><a target="text" href="calcout.html">calcout</a></li>
+   <li><a target="text" href="scalcout.html">scalcout</a></li>
+  </ul>
  </div>
+ <div class="top">
+  <a target="text" href="tipsandtricks.html">Tips &amp; Tricks</a>
+  <a href="javascript:show('tipsandtricks')" id="tipsandtricksButton"></a>
+  <ul id="tipsandtricks">
+   <li><a target="text" href="tipsandtricks.html#argvar">Many almost identical protocols</a></li>
+   <li><a target="text" href="tipsandtricks.html#iointr">Read unsolicited input</a></li>
+   <li><a target="text" href="tipsandtricks.html#multiline">Read multi-line messages</a></li>
+   <li><a target="text" href="tipsandtricks.html#writemany">Write more than one value in one message</a></li>
+   <li><a target="text" href="tipsandtricks.html#readmany">Read more than one value from one message</a></li>
+   <li><a target="text" href="tipsandtricks.html#mixed">Read values of mixed data type</a></li>
+  </ul>
+ </div>
+    
  <h1>Programmer's Guide</h1>
  <div class="top">
   <a target="text" href="recordinterface.html">Record API</a>
@@ -157,18 +174,19 @@ h1        {font-size:120%;
  <div class="top">
   <a target="text" href="businterface.html">Bus API</a>
   <a href="javascript:show('bus')" id="busButton"></a>
-  <div id="bus" class="sub">
-   <a target="text" href="businterface.html#class">Interface Class</a><br>
-   <a target="text" href="businterface.html#theory">Theory of Operation</a><br>
-   <div class="subsub">
-    <a target="text" href="businterface.html#registration">Registration</a><br>
-    <a target="text" href="businterface.html#create">Creation &amp; deletion</a><br>
-    <a target="text" href="businterface.html#connect">Connecting</a><br>
-    <a target="text" href="businterface.html#lock">Bus locking</a><br>
-    <a target="text" href="businterface.html#write">Writing output</a><br>
-    <a target="text" href="businterface.html#read">Reading input</a><br>
-   </div>
-  </div>
+  <ul id="bus">
+   <li><a target="text" href="businterface.html#class">Interface Class</a></li>
+   <li><a target="text" href="businterface.html#theory">Theory of Operation</a>
+    <ul>
+     <li><a target="text" href="businterface.html#registration">Registration</a></li>
+     <li><a target="text" href="businterface.html#create">Creation &amp; deletion</a></li>
+     <li><a target="text" href="businterface.html#connect">Connecting</a></li>
+     <li><a target="text" href="businterface.html#lock">Bus locking</a></li>
+     <li><a target="text" href="businterface.html#write">Writing output</a></li>
+     <li><a target="text" href="businterface.html#read">Reading input</a></li>
+     <li><a target="text" href="businterface.html#event">Handling events</a></li>
+   </ul></li>
+  </ul>
  </div>
  <div class="top">
   <a target="text" href="formatconverter.html">Format Converter API</a>
@@ -182,13 +200,14 @@ h1        {font-size:120%;
 <!--
     document.writeln('<a href="javascript:printview()">' +
         '<img src="printer.gif" alt="Printer friendly" border=0><br>' +
-        '<small>Printer friendly</small></a>');
+        '<small>Printer friendly<\/small><\/a>');
     hide('setup');
     hide('protocol');
     hide('formats');
     hide('proc');
     hide('records');
     hide('bus');
+    hide('tipsandtricks');
     chapter=decodeURIComponent(parent.location.search.substr(1));
     if (chapter) parent.text.location.href=chapter;
 //-->

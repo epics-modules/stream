@@ -10,13 +10,17 @@
 </head>
 <body>
 <h1>StreamDevice: aao Records</h1>
+<p>
+<b>Note:</b> aao record support is disabled per default.
+Enable it in <code>src/CONFIG_STREAM</code>.
+</p>
 
 <h2>Normal Operation</h2>
 <p>
 With aao records, the format converter is applied to
 each element. Between the elements, a separator is printed
 or expected as specified by the <code>Separator</code>
-variable in the protocol.
+<a href="protocol.html#sysvar">variable</a> in the protocol.
 When parsing input, a space as the first character of the
 <code>Separator</code> matches any number of any whitespace
 characters.
@@ -96,7 +100,7 @@ the written or read value.
 
 <h2>Initialization</h2>
 <p>
- During initialization, the <code>@init</code> handler is executed, if
+ During <a href="processing.html#init">initialization</a>, the <code>@init</code> handler is executed, if
  present. All format converters work like in normal operation.
 </p>
 

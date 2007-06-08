@@ -5,7 +5,6 @@
 # This requires the naming conventions
 # dev$(RECORD)Stream.c
 
-#RECORDS += aai aao
 RECORDS += ao ai
 RECORDS += bo bi
 RECORDS += mbbo mbbi
@@ -14,6 +13,7 @@ RECORDS += longout longin
 RECORDS += stringout stringin
 RECORDS += waveform
 RECORDS += calcout
+#RECORDS += aai aao
 
 # Do you have synApps and want support for scalcout?
 # Then define CALC or SYNAPPS in your RELEASE file

@@ -39,6 +39,8 @@ typedef enum {
     pseudo_format = 5
 } StreamFormatType;
 
+extern const char* StreamFormatTypeStr[];
+
 typedef struct StreamFormat
 {
     char conv;

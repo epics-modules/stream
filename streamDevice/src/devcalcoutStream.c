@@ -18,6 +18,7 @@
 ***************************************************************/
 
 #include <devStream.h>
+#include <postfix.h>
 #include <calcoutRecord.h>
 #include <epicsExport.h>
 

@@ -242,6 +242,8 @@ compile(StreamProtocolParser::Protocol* protocol)
     writeTimeout = 100;
     maxInput = 0;
     pollPeriod = 1000;
+    inTerminatorDefined = false;
+    outTerminatorDefined = false;
     
     unsigned short ignoreExtraInput = false;
     if (!protocol->getEnumVariable("extrainput", ignoreExtraInput,
@@ -261,10 +263,10 @@ compile(StreamProtocolParser::Protocol* protocol)
     {
         return false;
     }
-    if (!(protocol->getStringVariable("terminator", inTerminator) &&
-        protocol->getStringVariable("terminator", outTerminator) &&
-        protocol->getStringVariable("interminator", inTerminator) &&
-        protocol->getStringVariable("outterminator", outTerminator) &&
+    if (!(protocol->getStringVariable("terminator", inTerminator, &inTerminatorDefined) &&
+        protocol->getStringVariable("terminator", outTerminator, &outTerminatorDefined) &&
+        protocol->getStringVariable("interminator", inTerminator, &inTerminatorDefined) &&
+        protocol->getStringVariable("outterminator", outTerminator, &outTerminatorDefined) &&
         protocol->getStringVariable("separator", separator)))
     {
         return false;
@@ -425,7 +427,6 @@ startProtocol(StartMode startMode)
     }
     commandIndex = (startMode == StartInit) ? onInit() : commands();
     runningHandler = Success;
-    busSetEos(inTerminator(), inTerminator.length());
     protocolStartHook();
     return evalCommand();
 }
@@ -456,6 +457,9 @@ finishProtocol(ProtocolResult status)
         char* handler;
         switch (status)
         {
+            case Success:
+                handler = NULL;
+                break;
             case WriteTimeout:
                 handler = onWriteTimeout();
                 break;
@@ -482,13 +486,9 @@ finishProtocol(ProtocolResult status)
                     break;
                 }
                 break;
-            case Abort:
-                // cancel anything running
-                busCancelAll();
-            case Fault:
+            default:
                 // get rid of all the rubbish whe might have collected
                 inputBuffer.clear();
-            default:
                 handler = NULL;
         }
         if (handler)
@@ -517,6 +517,7 @@ finishProtocol(ProtocolResult status)
         busUnlock();
         flags &= ~BusOwner;
     }
+    busFinish();
     protocolFinishHook(status);
 }
 
@@ -760,7 +761,7 @@ printValue(const StreamFormat& fmt, char* value)
 }
 
 void StreamCore::
-lockCallback(StreamBusInterface::IoStatus status)
+lockCallback(StreamIoStatus status)
 {
     MutexLock lock(this);
     debug("StreamCore::lockCallback(%s, status=%s)\n",
@@ -773,7 +774,7 @@ lockCallback(StreamBusInterface::IoStatus status)
     }
     flags &= ~LockPending;
     flags |= BusOwner;
-    if (status != StreamBusInterface::ioSuccess)
+    if (status != StreamIoSuccess)
     {
         finishProtocol(LockTimeout);
         return;
@@ -786,7 +787,7 @@ lockCallback(StreamBusInterface::IoStatus status)
 }
 
 void StreamCore::
-writeCallback(StreamBusInterface::IoStatus status)
+writeCallback(StreamIoStatus status)
 {
     MutexLock lock(this);
     debug("StreamCore::writeCallback(%s, status=%s)\n",
@@ -798,12 +799,27 @@ writeCallback(StreamBusInterface::IoStatus status)
         return;
     }
     flags &= ~WritePending;
-    if (status != StreamBusInterface::ioSuccess)
+    if (status != StreamIoSuccess)
     {
         finishProtocol(WriteTimeout);
         return;
     }
     evalCommand();
+}
+
+const char* StreamCore::
+getOutTerminator(size_t& length)
+{
+    if (outTerminatorDefined)
+    {
+        length = outTerminator.length();
+        return outTerminator();
+    }
+    else
+    {
+        length = 0;
+        return NULL;
+    }
 }
 
 // Handle 'in' command
@@ -815,7 +831,7 @@ evalIn()
     long expectedInput;
 
     expectedInput = maxInput;
-    if (inputBuffer && unparsedInput)
+    if (unparsedInput)
     {
         // handle early input
         debug("StreamCore::evalIn(%s): early input: %s\n",
@@ -848,22 +864,23 @@ evalIn()
 }
 
 long StreamCore::
-readCallback(StreamBusInterface::IoStatus status,
+readCallback(StreamIoStatus status,
     const void* input, long size)
 // returns number of bytes to read additionally
 
 {
+    if (status < 0 || status > StreamIoFault)
+    {
+        error("StreamCore::readCallback(%s) called with illegal StreamIoStatus %d\n",
+            name(), status);
+        return 0;
+    }
     MutexLock lock(this);
     lastInputStatus = status;
 
 #ifndef NO_TEMPORARY
     debug("StreamCore::readCallback(%s, status=%s input=\"%s\", size=%ld)\n",
-        name(),
-        status == 0 ? "ioSuccess" :
-        status == 1 ? "ioTimeout" :
-        status == 2 ? "ioNoReply" :
-        status == 3 ? "ioEnd" :
-        status == 4 ? "ioFault" : "Invalid",
+        name(), StreamIoStatusStr[status],
         StreamBuffer(input, size).expand()(), size);
 #endif
 
@@ -877,19 +894,19 @@ readCallback(StreamBusInterface::IoStatus status,
     unparsedInput = false;
     switch (status)
     {
-        case StreamBusInterface::ioTimeout:
+        case StreamIoTimeout:
             // timeout is valid end if we have no terminator
             // and number of input bytes is not limited
             if (!inTerminator && !maxInput)
             {
-                status = StreamBusInterface::ioEnd;
+                status = StreamIoEnd;
             }
             // else timeout might be ok if we find a terminator
             break;
-        case StreamBusInterface::ioSuccess:
-        case StreamBusInterface::ioEnd:
+        case StreamIoSuccess:
+        case StreamIoEnd:
             break;
-        case StreamBusInterface::ioNoReply:
+        case StreamIoNoReply:
             if (flags & AsyncMode)
             {
                 // just restart in asyn mode
@@ -903,8 +920,8 @@ readCallback(StreamBusInterface::IoStatus status,
             inputBuffer.clear();
             finishProtocol(ReplyTimeout);
             return 0;
-        case StreamBusInterface::ioFault:
-            error("%s: I/O error from device\n", name());
+        case StreamIoFault:
+            error("%s: I/O error when reading from device\n", name());
             finishProtocol(Fault);
             return 0;
     }
@@ -932,7 +949,7 @@ readCallback(StreamBusInterface::IoStatus status,
         debug("StreamCore::readCallback(%s) inTerminator %sfound\n",
             name(), end >= 0 ? "" : "not ");
     }
-    if (status == StreamBusInterface::ioEnd && end < 0)
+    if (status == StreamIoEnd && end < 0)
     {
         // no terminator but end flag
         debug("StreamCore::readCallback(%s) end flag received\n",
@@ -955,7 +972,7 @@ readCallback(StreamBusInterface::IoStatus status,
     if (end < 0)
     {
         // no end found
-        if (status != StreamBusInterface::ioTimeout)
+        if (status != StreamIoTimeout)
         {
             // input is incomplete - wait for more
             debug("StreamCore::readCallback(%s) wait for more input\n",
@@ -976,7 +993,7 @@ readCallback(StreamBusInterface::IoStatus status,
         }
     }
     
-    if (status == StreamBusInterface::ioTimeout && (flags & AsyncMode))
+    if (status == StreamIoTimeout && (flags & AsyncMode))
     {
         debug("StreamCore::readCallback(%s) async timeout: just restart\n",
             name());
@@ -987,13 +1004,19 @@ readCallback(StreamBusInterface::IoStatus status,
     }
 
     inputLine.set(inputBuffer(), end);
+    debug("StreamCore::readCallback(%s) input line: \"%s\"\n",
+        name(), inputLine.expand()());
     bool matches = matchInput();
     inputBuffer.remove(end + termlen);
-    if (inputBuffer) unparsedInput = true;
-
+    if (inputBuffer)
+    {
+        debug("StreamCore::readCallback(%s) unpared input left: \"%s\"\n",
+            name(), inputBuffer.expand()());
+        unparsedInput = true;
+    }
     if (!matches)
     {
-        if (status == StreamBusInterface::ioTimeout)
+        if (status == StreamIoTimeout)
         {
             // we have not forgotten the timeout
             finishProtocol(ReadTimeout);
@@ -1012,7 +1035,7 @@ readCallback(StreamBusInterface::IoStatus status,
         finishProtocol(ScanError);
         return 0;
     }
-    if (status == StreamBusInterface::ioTimeout)
+    if (status == StreamIoTimeout)
     {
         // we have not forgotten the timeout
         finishProtocol(ReadTimeout);
@@ -1306,6 +1329,21 @@ scanValue(const StreamFormat& fmt, char* value, long maxlen)
     return consumed;
 }
 
+const char* StreamCore::
+getInTerminator(size_t& length)
+{
+    if (inTerminatorDefined)
+    {
+        length = inTerminator.length();
+        return inTerminator();
+    }
+    else
+    {
+        length = 0;
+        return NULL;
+    }
+}
+
 // Handle 'event' command
 
 bool StreamCore::
@@ -1329,9 +1367,14 @@ evalEvent()
 }
 
 void StreamCore::
-eventCallback(StreamBusInterface::IoStatus status)
+eventCallback(StreamIoStatus status)
 {
-    MutexLock lock(this);
+    if (status < 0 || status > StreamIoFault)
+    {
+        error("StreamCore::eventCallback(%s) called with illegal StreamIoStatus %d\n",
+            name(), status);
+        return;
+    }
     if (!(flags & AcceptEvent))
     {
         error("StreamCore::eventCallback(%s) called unexpectedly\n",
@@ -1339,24 +1382,21 @@ eventCallback(StreamBusInterface::IoStatus status)
         return;
     }
     debug("StreamCore::eventCallback(%s, status=%s)\n",
-        name(),
-        status == 0 ? "ioSuccess" :
-        status == 1 ? "ioTimeout" :
-        status == 2 ? "ioNoReply" :
-        status == 3 ? "ioEnd" :
-        status == 4 ? "ioFault" : "Invalid");
+        name(), StreamIoStatusStr[status]);
+    MutexLock lock(this);
     flags &= ~AcceptEvent;
     switch (status)
     {
-        case StreamBusInterface::ioTimeout:
+        case StreamIoTimeout:
             error("%s: No event from device\n", name());
             finishProtocol(ReplyTimeout);
             return;
-        case StreamBusInterface::ioSuccess:
+        case StreamIoSuccess:
             evalCommand();
             return;
         default:
-            error("%s: Event error from device\n", name());
+            error("%s: Event error from device: %s\n",
+                name(), StreamIoStatusStr[status]);
             finishProtocol(Fault);
             return;
     }
@@ -1411,11 +1451,11 @@ evalExec()
 }
 
 void StreamCore::
-execCallback(StreamBusInterface::IoStatus status)
+execCallback(StreamIoStatus status)
 {
     switch (status)
     {
-        case StreamBusInterface::ioSuccess:
+        case StreamIoSuccess:
             evalCommand();
             return;
         default:
@@ -1446,11 +1486,11 @@ bool StreamCore::evalConnect()
 }
 
 void StreamCore::
-connectCallback(StreamBusInterface::IoStatus status)
+connectCallback(StreamIoStatus status)
 {
     switch (status)
     {
-        case StreamBusInterface::ioSuccess:
+        case StreamIoSuccess:
             evalCommand();
             return;
         default:

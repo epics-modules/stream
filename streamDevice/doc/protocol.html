@@ -347,9 +347,8 @@ what they influence.
   The device may send input in pieces (e.g. bytes).
   When it stops sending, how many milliseconds to wait for more
   input bytes before giving up?
-  If no <code>Terminator</code> or <code>InTerminator</code>
-  is defined, a read timeout is not an error but a valid input
-  termination.
+  If <code>InTerminator = ""</code>, a read timeout is not an error
+  but a valid input termination.
  </dd>
  <dt><code>PollPeriod = $ReplyTimeout;</code></dt>
  <dd>
@@ -364,7 +363,7 @@ what they influence.
   If not set the same value as for <code>ReplyTimeout</code> is
   used.
  </dd>
- <dt><code>Terminator = "";</code></dt>
+ <dt><code>Terminator</code></dt>
  <dd>
   String. Affects <code>out</code> and <code>in</code> commands.<br>
   Most devices send and expect terminators after each message,
@@ -373,7 +372,10 @@ what they influence.
   appended to any output.
   It is also used to find the end of input.
   It is removed before the input is passed to the <code>in</code>
-  command. 
+  command.
+  If no <code>Terminator</code> or <code>InTerminator</code> is defined,
+  the underlying driver may use its own terminator settings.
+  For example, <i>asynDriver</i> defines its own terminator settings.
  </dd>
  <dt><code>OutTerminator = $Terminator;</code></dt>
  <dd>
@@ -386,9 +388,10 @@ what they influence.
   String. Affects <code>in</code> commands.<br>
   If a device has different terminators for input and output,
   use this for the input terminator.
-  If no <code>Terminator</code> or <code>InTerminator</code>
-  is defined, a read timeout is not an error but a valid input
-  termination.
+  If no <code>Terminator</code> or <code>InTerminator</code> is defined,
+  the underlying driver may use its own terminator settings.
+  If <code>InTerminator = ""</code>, a read timeout is not an error
+  but a valid input termination.
  </dd>
  <dt><code>MaxInput = 0;</code></dt>
  <dd>

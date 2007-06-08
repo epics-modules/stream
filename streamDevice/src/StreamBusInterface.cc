@@ -19,6 +19,10 @@
 
 #include "StreamBusInterface.h"
 
+const char* StreamIoStatusStr[] = {
+    "StreamIoSuccess", "ioTimeout", "ioNoReply", "ioEnd", "ioFault"
+};
+
 StreamBusInterfaceRegistrarBase* StreamBusInterfaceRegistrarBase::first;
 
 StreamBusInterfaceRegistrarBase::
@@ -30,18 +34,15 @@ StreamBusInterfaceRegistrarBase(const char* name) : name(name)
     *pr = this;
 }
 
-StreamBusInterface::
-StreamBusInterface(Client* client) :
-    client(client), eos(NULL), eoslen(0)
+StreamBusInterfaceRegistrarBase::
+~StreamBusInterfaceRegistrarBase()
 {
 }
 
-bool StreamBusInterface::
-setEos(const char* _eos, size_t _eoslen)
+StreamBusInterface::
+StreamBusInterface(Client* client) :
+    client(client)
 {
-    eos = _eos;
-    eoslen = _eoslen;
-    return true;
 }
 
 bool StreamBusInterface::
@@ -106,28 +107,33 @@ readRequest(unsigned long, unsigned long, long, bool)
 }
 
 void StreamBusInterface::
-cancelAll()
+finish()
+{
+}
+
+StreamBusInterface::Client::
+~Client()
 {
 }
 
 void StreamBusInterface::Client::
-writeCallback(IoStatus)
+writeCallback(StreamIoStatus)
 {
 }
 
 long StreamBusInterface::Client::
-readCallback(IoStatus, const void*, long)
+readCallback(StreamIoStatus, const void*, long)
 {
     return 0;
 }
 
 void StreamBusInterface::Client::
-eventCallback(IoStatus)
+eventCallback(StreamIoStatus)
 {
 }
 
 void StreamBusInterface::Client::
-connectCallback(IoStatus)
+connectCallback(StreamIoStatus)
 {
 }
 

@@ -40,6 +40,7 @@ class StreamFormatConverter
     static StreamFormatConverter* registered [];
     const char* _name;
 public:
+    virtual ~StreamFormatConverter();
     const char* name() { return _name; }
     void provides(const char* name, const char* provided);
     static StreamFormatConverter* find(unsigned char c);

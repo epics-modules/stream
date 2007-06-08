@@ -118,6 +118,9 @@ field formatted as a string.
 Use <code>in&nbsp;"%(<i>otherrecord</i>.VAL)f";</code> to write the floating
 point input value into the <code>VAL</code> field of
 <code><i>otherrecord</i></code>.
+(You can't skip <code>.VAL</code> here.)
+This is very useful when one line of input contains many values that should
+be distributed to many records.
 If <code><i>otherrecord</i></code> is passive and the field has the PP
 attribute (see
 <a href="http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/AppDevManuals/RecordRef/Recordref-1.html"
@@ -134,7 +137,7 @@ Some formats are not actually converters.
 They format data which is not stored in a record field, such as a
 <a href="#chksum">checksum</a>.
 No data type corresponds to those <em>pseudo-converters</em> and the
-<code>(<em>field</em>)</code> syntax cannot be used.
+<code>%(<em>FIELD</em>)</code> syntax cannot be used.
 </p>
 
 <a name="stdd"></a>
@@ -395,11 +398,13 @@ In input, the next byte or bytes must match the checksum.
  <dt><code>%&lt;ADLER32&gt;</code></dt>
   <dd>Four bytes. The Adler32 checksum according to <a target="ex"
    href="http://www.ietf.org/rfc/rfc1950.txt">RFC 1950</a>.</dd>
+ <dt><code>%&lt;HEXSUM8&gt;</code></dt>
+  <dd>One byte. The sum of all hex digits. (Other characters are ignored.)</dd>
 </dl>
 
 <hr>
 <p align="right"><a href="processing.html">Next: Record Processing</a></p>
-<p><small>Dirk Zimoch, 2006</small></p>
+<p><small>Dirk Zimoch, 2007</small></p>
 <script src="stream.js" type="text/javascript"></script>
 </body>
 </html>

@@ -25,6 +25,10 @@
 #include "StreamFormatConverter.h"
 #include "StreamError.h"
 
+const char* StreamFormatTypeStr[] = {
+    "none", "long", "enum", "double", "string", "pseudo"
+};
+
 class StreamProtocolParser::Protocol::Variable
 {
     friend class Protocol;
@@ -47,6 +51,12 @@ class StreamProtocolParser::Protocol::Variable
 StreamProtocolParser* StreamProtocolParser::parsers = NULL;
 const char* StreamProtocolParser::path = ".";
 static const char* specialChars = " ,;{}=()$'\"+-*/";
+
+// Client destructor
+StreamProtocolParser::Client::
+~Client()
+{
+}
 
 // Private constructor
 StreamProtocolParser::
@@ -629,16 +639,6 @@ parseValue(StreamBuffer& buffer, bool lazy)
 // tools (static member functions)
 
 const char* StreamProtocolParser::
-formatTypeStr(int type)
-{
-    const char* str [] = {"none", "long", "double", "string", "pseudo"};
-    static char illegal[20];
-    if (type <= pseudo_format) return str[type];
-    sprintf(illegal, "illegal %d", type);
-    return illegal;
-}
-
-const char* StreamProtocolParser::
 printString(StreamBuffer& buffer, const char* s)
 {
     while (*s)
@@ -838,22 +838,6 @@ getVariable(const char* name)
     return NULL;
 }
 
-const StreamBuffer* StreamProtocolParser::Protocol::
-getValue(const char* varname)
-{
-    Variable* pV;
-
-    for (pV = variables; pV; pV = pV->next)
-    {
-        if (pV->name.equals(varname))
-        {
-            pV->used = true;
-            return &pV->value;
-        }
-    }
-    return NULL;
-}
-
 bool StreamProtocolParser::Protocol::
 getNumberVariable(const char* varname, unsigned long& value, unsigned long max)
 {
@@ -900,12 +884,14 @@ getEnumVariable(const char* varname, unsigned short& value, const char** enumstr
 }
 
 bool StreamProtocolParser::Protocol::
-getStringVariable(const char* varname, StreamBuffer& value)
+getStringVariable(const char* varname, StreamBuffer& value, bool* defined)
 {
-    const StreamBuffer* pvalue = getValue(varname);
-    if (!pvalue) return true;
-    value.clear();
+    const Variable* pvar = getVariable(varname);
+    if (!pvar) return true;
+    if (defined) *defined = true;
+    const StreamBuffer* pvalue = &pvar->value;
     const char* source = (*pvalue)();
+    value.clear();
     if (!compileString(value, source))
     {
         error("in string variable '%s' in protocol file '%s' line %d\n",
@@ -1618,7 +1604,7 @@ compileFormat(StreamBuffer& buffer, const char*& formatstr,
     buffer.append(infoString);
 
     debug("StreamProtocolParser::Protocol::compileFormat: format.type=%s, infolen=%d\n",
-        formatTypeStr(streamFormat.type), streamFormat.infolen);
+        StreamFormatTypeStr[streamFormat.type], streamFormat.infolen);
     formatstr = source; // move pointer after parsed format
     return true;
 }

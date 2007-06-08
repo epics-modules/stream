@@ -64,9 +64,7 @@ public:
         {init(NULL, size);}
 
     ~StreamBuffer()
-        {if (buffer != local) {
-            delete buffer;}
-        }
+        {if (buffer != local) delete buffer;}
 
     // operator (): get char* pointing to index
     const char* operator()(long index=0) const
@@ -90,9 +88,9 @@ public:
     long length() const
         {return len;}
 
-    // capacity: get current memory consumption
+    // capacity: get current max data length (spare one byte for end)
     long capacity() const
-        {return cap;}
+        {return cap-1;}
 
     // end: get pointer to byte after last data byte
     const char* end() const

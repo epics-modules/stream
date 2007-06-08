@@ -147,7 +147,30 @@ asynSetOption ("PS1", 0, "baud", "9600")
 asynSetOption ("PS1", 0, "bits", "8")
 asynSetOption ("PS1", 0, "parity", "none")
 asynSetOption ("PS1", 0, "stop", "1")
+asynSetOption ("PS1", 0, "clocal", "Y")
+asynSetOption ("PS1", 0, "crtscts", "N")
 </pre>
+
+<p>If the power supply was connected via telnet-style TCP/IP
+at address 192.168.164.10 on port 23,
+the startupscript would contain:
+</p>
+<pre>
+epicsEnvSet ("STREAM_PROTOCOL_PATH", ".:../protocols")
+
+drvAsynIPPortConfigure ("PS1", "192.168.164.10:23")
+</pre>
+
+<p>
+With a VXI11 (GPIB via TCP/IP) connection, e.g. a 
+HP E2050A on IP address 192.168.164.10, it would look like this:
+</p>
+<pre>
+epicsEnvSet ("STREAM_PROTOCOL_PATH", ".:../protocols")
+
+vxi11Configure ("PS1","192.168.164.10",1,1000,"hpib")
+</pre>
+
 
 <a name="pro"></a>
 <h2>5. The Protocol File</h2>
@@ -261,7 +284,7 @@ record (ao, "PS1:I-set")
 
 <hr>
 <p align="right"><a href="protocol.html">Next: Protocol Files</a></p>
-<p><small>Dirk Zimoch, 2006</small></p>
+<p><small>Dirk Zimoch, 2007</small></p>
 <script src="stream.js" type="text/javascript"></script>
 </body>
 </html>
