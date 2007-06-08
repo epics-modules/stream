@@ -11,7 +11,7 @@ else
 # EPICS R3.14
 include $(TOP)/configure/CONFIG
 
-#HOST_OPT = NO
+HOST_OPT = NO
 
 PROD = streamApp
 DBD  = streamApp.dbd
@@ -27,20 +27,17 @@ PROD_LIBS = stream
 
 ifdef ASYN
 # Which types of asyn busses do you have?
-ifneq ($(OS_CLASS), WIN32)
-# asynDriver up to version 4-8 does not support serial port for Windows!
 streamApp_DBD += drvAsynSerialPort.dbd
-endif
 streamApp_DBD += drvAsynIPPort.dbd
 #streamApp_DBD += drvGsIP488.dbd
 #streamApp_DBD += drvNi1014.dbd
-streamApp_DBD += drvVxi11.dbd
+#streamApp_DBD += drvVxi11.dbd
 PROD_LIBS += asyn
 endif
 
 ifneq ($(words $(CALC) $(SYNAPPS)), 0)
 # With synApps scalcout record
-streamApp_DBD += calc.dbd
+streamApp_DBD += calcSupport.dbd
 streamApp_DBD += streamSynApps.dbd
 PROD_LIBS += calc sscan
 PROD_LIBS_DEFAULT += streamSynApps
@@ -54,15 +51,6 @@ PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
 CPPFLAGS += -DDEBUGFILE=StreamDebug.log
 
 include $(TOP)/configure/RULES
-
-clean realclean::
-	rm -f core* streamApp streamApp.exe* StreamDebug.log
-
-build: link
-
-link:
-	rm -f ../streamApp$(EXE)
-	ln -s O.$(EPICS_HOST_ARCH)/streamApp$(EXE) ../streamApp$(EXE)
 
 endif
 
