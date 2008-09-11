@@ -11,7 +11,7 @@ else
 # EPICS R3.14
 include $(TOP)/configure/CONFIG
 
-HOST_OPT = NO
+#HOST_OPT = NO
 
 PROD = streamApp
 DBD  = streamApp.dbd
