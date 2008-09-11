@@ -592,8 +592,14 @@ writeHandler()
     const char* streameos = getOutTerminator(streameoslen);
     if (streameos) // stream has added eos
     {
-        status = pasynOctet->writeRaw(pvtOctet, pasynUser,
+        char asynEos[10];
+        int asynEosLen;
+       
+        pasynOctet->getOutputEos(pvtOctet, pasynUser, asynEos, sizeof(asynEos), &asynEosLen);
+        pasynOctet->setOutputEos(pvtOctet, pasynUser, "", 0);
+        status = pasynOctet->write(pvtOctet, pasynUser,
             outputBuffer, outputSize, &written);
+        pasynOctet->setOutputEos(pvtOctet, pasynUser, asynEos, asynEosLen);
     }
     else // asyn should add eos
     {
