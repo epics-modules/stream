@@ -38,14 +38,19 @@ endif
 
 ifdef ASYN
 # Which types of asyn busses do you have?
-ifneq ($(OS_CLASS), WIN32)
+#tmm ifneq ($(OS_CLASS), WIN32)
 # asynDriver up to version 4-8 does not support serial port for Windows!
 streamApp_DBD += drvAsynSerialPort.dbd
-endif
+#tmm endif
 streamApp_DBD += drvAsynIPPort.dbd
 #streamApp_DBD += drvGsIP488.dbd
 #streamApp_DBD += drvNi1014.dbd
+
+ifneq ($(OS_CLASS), cygwin32)
+# tmm: could not get the following to build on cygwin
 streamApp_DBD += drvVxi11.dbd
+endif
+
 PROD_LIBS += asyn
 endif
 
