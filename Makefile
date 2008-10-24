@@ -7,5 +7,5 @@ DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *app))
 DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocBoot))
 DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocboot))
 #DIRS += streamDevice
-DIRS += streamDevice_2-3
+DIRS += StreamDevice_2-3
 include $(TOP)/configure/RULES_TOP
