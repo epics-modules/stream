@@ -45,13 +45,10 @@ streamApp_DBD += drvAsynSerialPort.dbd
 streamApp_DBD += drvAsynIPPort.dbd
 #streamApp_DBD += drvGsIP488.dbd
 #streamApp_DBD += drvNi1014.dbd
-
-ifneq ($(OS_CLASS), cygwin32)
-# tmm: could not get the following to build on cygwin
 streamApp_DBD += drvVxi11.dbd
-endif
 
 PROD_LIBS += asyn
+PROD_SYS_LIBS_cygwin32 += rpc
 endif
 
 ifneq ($(words $(CALC) $(SYNAPPS)), 0)
