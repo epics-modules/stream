@@ -47,6 +47,7 @@ streamApp_DBD += drvAsynIPPort.dbd
 #streamApp_DBD += drvNi1014.dbd
 streamApp_DBD += drvVxi11.dbd
 PROD_LIBS += asyn
+PROD_SYS_LIBS_CYGWIN += rpc
 endif
 
 ifneq ($(words $(CALC) $(SYNAPPS)), 0)
