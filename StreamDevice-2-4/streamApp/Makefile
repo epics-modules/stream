@@ -52,7 +52,8 @@ endif
 
 ifneq ($(words $(CALC) $(SYNAPPS)), 0)
 # With synApps scalcout record
-streamApp_DBD += calc.dbd
+#streamApp_DBD += calc.dbd
+streamApp_DBD += calcSupport.dbd
 streamApp_DBD += streamSynApps.dbd
 PROD_LIBS += calc sscan
 PROD_LIBS_DEFAULT += streamSynApps
