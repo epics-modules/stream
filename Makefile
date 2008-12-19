@@ -1,11 +1,7 @@
 #Makefile at top of application tree
 TOP = .
 include $(TOP)/configure/CONFIG
-DIRS := $(DIRS) $(filter-out $(DIRS), configure)
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *App))
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard *app))
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocBoot))
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocboot))
-#DIRS += streamDevice
-DIRS += StreamDevice_2-3
+DIRS += configure StreamDevice-2-4
+StreamDevice-2-4_DEPEND_DIRS  = configure
+
 include $(TOP)/configure/RULES_TOP
