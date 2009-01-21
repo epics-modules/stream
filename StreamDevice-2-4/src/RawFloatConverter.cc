@@ -35,10 +35,10 @@
 // Let's hope all other architectures have sys/param.h
 #include <sys/param.h>
 /* begin tmm added */
-#if defined(_BIG_ENDIAN)
+#if defined(_BIG_ENDIAN) || defined(__BIG_ENDIAN__)
 #define __BYTE_ORDER __BIG_ENDIAN
 #endif
-#if defined(_LITTLE_ENDIAN)
+#if defined(_LITTLE_ENDIAN) || defined(__LITTLE_ENDIAN__)
 #define __BYTE_ORDER __LITTLE_ENDIAN
 #endif
 /* end tmm added */
