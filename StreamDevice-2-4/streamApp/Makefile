@@ -47,7 +47,9 @@ streamApp_DBD += drvAsynIPPort.dbd
 #streamApp_DBD += drvNi1014.dbd
 streamApp_DBD += drvVxi11.dbd
 PROD_LIBS += asyn
-PROD_SYS_LIBS_CYGWIN += rpc
+# This doesn't work on my cygwin system, but the next line does - Tim Mooney
+#PROD_SYS_LIBS_CYGWIN += rpc
+PROD_SYS_LIBS_cygwin32 += rpc
 endif
 
 ifneq ($(words $(CALC) $(SYNAPPS)), 0)
