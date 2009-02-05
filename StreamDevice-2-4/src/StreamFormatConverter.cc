@@ -278,7 +278,7 @@ scanString(const StreamFormat& fmt, const char* input,
     if (*input == '\0')
     {
         // match empty string
-        value[0] = '\0';
+        if (value) value[0] = '\0';
         return 0;
     }
     if (fmt.flags & skip_flag)
