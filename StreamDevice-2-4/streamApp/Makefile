@@ -73,13 +73,13 @@ include $(TOP)/configure/RULES
 clean:: myclean
 
 myclean:
-	rm -f core* streamApp streamApp.exe* StreamDebug.log
+#	rm -f core* streamApp streamApp.exe* StreamDebug.log
 
 build: link
 
 link:
-	rm -f ../streamApp$(EXE)
-	ln -s O.$(EPICS_HOST_ARCH)/streamApp$(EXE) ../streamApp$(EXE)
+#	rm -f ../streamApp$(EXE)
+#	ln -s O.$(EPICS_HOST_ARCH)/streamApp$(EXE) ../streamApp$(EXE)
 
 endif
 
