@@ -13,9 +13,11 @@ else
   ifneq ($(words $(CALC) $(SYNAPPS)), 0)
     # with synApps calc module (contains scalcout)
     DIRS += srcSynApps
+    srcSynApps_DEPEND_DIRS = src
   endif
 endif
 
 DIRS += streamApp
+streamApp_DEPEND_DIRS = src srcSynApps
 
 include $(CONFIG)/RULES_DIRS
