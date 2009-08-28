@@ -19,6 +19,7 @@
 ***************************************************************/
 
 #include "devStream.h"
+#include <errlog.h>
 #include <waveformRecord.h>
 #include <string.h>
 #include <epicsExport.h>
