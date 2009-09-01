@@ -129,9 +129,11 @@ static const char* asynStatusStr[] = {
     "asynSuccess", "asynTimeout", "asynOverflow", "asynError"
 };
 
+#ifndef NO_TEMPORARY
 static const char* eomReasonStr[] = {
     "NONE", "CNT", "EOS", "CNT+EOS", "END", "CNT+END", "EOS+END", "CNT+EOS+END"
 };
+#endif
 
 class AsynDriverInterface : StreamBusInterface
 #ifdef EPICS_3_14
@@ -663,6 +665,16 @@ writeHandler()
                 clientName(), pasynUser->errorMessage);
             writeCallback(StreamIoFault);
             return;
+        case asynDisconnected:
+            error("%s: asynDisconnected in write: %s\n",
+                clientName(), pasynUser->errorMessage);
+            writeCallback(StreamIoFault);
+            return;
+        case asynDisabled:
+            error("%s: asynDisabled in write: %s\n",
+                clientName(), pasynUser->errorMessage);
+            writeCallback(StreamIoFault);
+            return;
     }
 }
 
@@ -922,6 +934,15 @@ readHandler()
                     clientName(), pasynUser->errorMessage);
                 readCallback(StreamIoFault, buffer, received);
                 break;
+            case asynDisconnected:
+                error("%s: asynDisconnected in read: %s\n",
+                    clientName(), pasynUser->errorMessage);
+                readCallback(StreamIoFault, buffer, received);
+                return;
+            case asynDisabled:
+                error("%s: asynDisabled in read: %s\n",
+                    clientName(), pasynUser->errorMessage);
+                readCallback(StreamIoFault, buffer, received);
         }
         if (!readMore) break;
         if (readMore > 0)
