@@ -9,11 +9,11 @@
 # module defined in the RELEASE file is rebuilt.
 
 SUPPORT=/corvette/home/epics/devel
-ASYN=/corvette/home/epics/devel/asyn/4-10
-CALC=/corvette/home/epics/devel/calc/2-6-5beta
-SSCAN=/corvette/home/epics/devel/sscan/2-6-2
+ASYN=/corvette/home/epics/devel/asyn/4-13
+CALC=/corvette/home/epics/devel/calc/2-8
+SSCAN=/corvette/home/epics/devel/sscan/2-6-6
 
 # EPICS_BASE usually appears last so other apps can override stuff:
-EPICS_BASE=/corvette/usr/local/epics/base-3.14.10
+EPICS_BASE=/corvette/usr/local/epics/base-3.14.11
 
 TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
