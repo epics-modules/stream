@@ -1,11 +1,9 @@
-#/bin/sh
-#\
-exec wish $0
+#!/usr/bin/env wish
 
 wm iconify .
 
 proc createTerm {sock} {
-    global socket
+    global socket port
     toplevel .$sock
     text .$sock.t -yscrollcommand ".$sock.v set" 
     scrollbar .$sock.v -command ".$sock.t yview"
@@ -18,9 +16,16 @@ proc createTerm {sock} {
     bind .$sock.t <F1> "%W delete 0.1 end"
     set socket(.$sock.t) $sock
     focus .$sock.t
+    wm title .$sock "port $port <-> [fconfigure $sock -peername]" 
 }
 
-socket -server connect 40000
+set port [lindex $argv 0]
+if {$port == ""} { set port 40000 }
+if [catch {
+    socket -server connect $port
+} msg ] {
+    return -code error "$msg (port $port)"
+}
 
 proc connect {sock addr port} {
     fconfigure $sock -blocking 0 -buffering none
@@ -49,26 +54,28 @@ proc receiveHandler {sock} {
     .$sock.t mark set insert end
     .$sock.t insert end $a output
     .$sock.t see end
+    set l [split $a]
     if [catch {
-        switch -- [lindex $a 0] {
+        switch -- [lindex $l 0] {
             "disconnect" {
+                sendReply $sock [string range $a 11 end]
                 destroy .$sock
             }
             "echo" {
                 sendReply $sock [string range $a 5 end]
             }
             "longmsg" {
-                set length [checkNum [lindex $a 1]]
+                set length [checkNum [lindex $l 1]]
                 sendReply $sock "[string range x[string repeat 0123456789abcdefghijklmnopqrstuvwxyz [expr $length / 36 + 1]] 1 $length]\n"
             }
             "wait" {
-                set wait [checkNum [lindex $a 1]]
+                set wait [checkNum [lindex $l 1]]
                 after $wait [list sendReply $sock "Done\n"]
             }
             "start" {
-                set wait [checkNum [lindex $a 1]]
+                set wait [checkNum [lindex $l 1]]
                 set ::counter 0
-                after $wait sendAsync $wait [list [lindex $a 2]]
+                after $wait sendAsync $wait [list [lindex $l 2]]
                 sendReply $sock "Started\n"
             }
             "stop" {
@@ -76,14 +83,14 @@ proc receiveHandler {sock} {
                 sendReply $sock "Stopped\n"
             }
             "set" {
-                set ::values([lindex $a 1]) [lrange $a 2 end]
+                set ::values([lindex $a 1]) [lrange $l 2 end-1]
                 sendReply $sock "Ok\n"
             }
             "get" {
-                if [info exists ::values([lindex $a 1])] {
-                    sendReply $sock "[lindex $a 1] $::values([lindex $a 1])\n"
+                if [info exists ::values([lindex $l 1])] {
+                    sendReply $sock "[lindex $l 1] $::values([lindex $l 1])\n"
                 } else {
-                    sendReply $sock "ERROR: [lindex $a 1] not found\n"
+                    sendReply $sock "ERROR: [lindex $l 1] not found\n"
                 }
             }
             "help" {
@@ -99,6 +106,7 @@ proc receiveHandler {sock} {
         }
     } msg] {
         sendReply $sock "ERROR: $msg\n"
+        puts stderr $::errorInfo
     }
 }
 

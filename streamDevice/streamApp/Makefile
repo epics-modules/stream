@@ -25,18 +25,36 @@ PROD_SRCS_vxWorks = -nil-
 
 PROD_LIBS = stream
 
+ifdef PCRE
+# With local PCRE package
+PROD_LIBS += pcre
+else
+ifneq ($(words $(PCRE_LIB) $(PCRE_INCLUDE)),0)
+# With system wide PCRE installation
+PROD_SYS_LIBS += pcre
+PROD_DEPLIB_DIRS += $(PCRE_LIB)
+endif
+endif
+
 ifdef ASYN
 # Which types of asyn busses do you have?
+ifneq ($(OS_CLASS), WIN32)
+# asynDriver up to version 4-8 does not support serial port for Windows!
 streamApp_DBD += drvAsynSerialPort.dbd
+endif
 streamApp_DBD += drvAsynIPPort.dbd
 #streamApp_DBD += drvGsIP488.dbd
 #streamApp_DBD += drvNi1014.dbd
-#streamApp_DBD += drvVxi11.dbd
+streamApp_DBD += drvVxi11.dbd
 PROD_LIBS += asyn
+# This doesn't work on my cygwin system, but the next line does - Tim Mooney
+#PROD_SYS_LIBS_CYGWIN += rpc
+PROD_SYS_LIBS_cygwin32 += rpc
 endif
 
 ifneq ($(words $(CALC) $(SYNAPPS)), 0)
 # With synApps scalcout record
+#streamApp_DBD += calc.dbd
 streamApp_DBD += calcSupport.dbd
 streamApp_DBD += streamSynApps.dbd
 PROD_LIBS += calc sscan
@@ -51,6 +69,17 @@ PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
 CPPFLAGS += -DDEBUGFILE=StreamDebug.log
 
 include $(TOP)/configure/RULES
+
+clean:: myclean
+
+myclean:
+#	rm -f core* streamApp streamApp.exe* StreamDebug.log
+
+build: link
+
+link:
+#	rm -f ../streamApp$(EXE)
+#	ln -s O.$(EPICS_HOST_ARCH)/streamApp$(EXE) ../streamApp$(EXE)
 
 endif
 

@@ -3,12 +3,15 @@
 Terminator = CR LF;
 ReplyTimeout = 10000; # 10 sec is very long, for keyboard input
 ReadTimeout = 1000;   # also long for keyboard input
-myvar = blabla 1 2 3;
+
+binary {
+    out "%B\x00\xff";
+}
 
 # note the field access
 ai { 
     out "%(NAME)s [int] ? ";
-    in "value = %i";   # read to RVAL and convert
+    in "%i";   # read to RVAL and convert
 }
 
 set-ao {
@@ -79,9 +82,10 @@ checksum {
     out "%s%0<crc32r> crcr32 (ASCII)";
     out "%s%0<jamcrc> jamcrc (ASCII)";
     out "%s%0<adler32> adler32 (ASCII)";
+    out "%s%0<hexsum8> hexsum8 (ASCII)";
 }
 
-Command {
+command {
     out "%s";
 }
 
@@ -90,9 +94,13 @@ info {
     in "%39c";
 }
 
+read {
+    in "%39c";
+}
+
 spy {
     extraInput=ignore;
-    PollPeriod = 100;
+    PollPeriod = 10;
     in "%39c";
 }
 
