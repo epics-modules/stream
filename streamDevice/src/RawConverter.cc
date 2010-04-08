@@ -45,7 +45,7 @@ printLong(const StreamFormat& format, StreamBuffer& output, long value)
     int width = prec;         // number of bytes in output
     if (format.width > width) width = format.width;
     char byte = 0;
-    if (format.flags & alt_flag) // lsb first (little endian)
+    if (format.flags & alt_flag) // little endian (lsb first)
     {
         while (prec--)
         {
@@ -54,16 +54,34 @@ printLong(const StreamFormat& format, StreamBuffer& output, long value)
             value >>= 8;
             width--;
         }
-        byte = (byte & 0x80) ? 0xFF : 0x00; // fill with sign
+        if (format.flags & zero_flag)
+        {
+            // fill with zero
+            byte = 0;
+        }
+        else
+        {
+            // fill with sign
+            byte = (byte & 0x80) ? 0xFF : 0x00;
+        }
         while (width--)
         {
             output.append(byte);
         }
     }
-    else // msb first (big endian)
+    else // big endian (msb first)
     {
-        byte = ((value >> (8 * (prec-1))) & 0x80) ? 0xFF : 0x00;
-        while (width > prec) // fill with sign
+        if (format.flags & zero_flag)
+        {
+            // fill with zero
+            byte = 0;
+        }
+        else
+        {
+            // fill with sign
+            byte = ((value >> (8 * (prec-1))) & 0x80) ? 0xFF : 0x00;
+        }
+        while (width > prec)
         {
             output.append(byte);
             width--;
@@ -89,7 +107,7 @@ scanLong(const StreamFormat& format, const char* input, long& value)
     }
     if (format.flags & alt_flag)
     {
-        // little endian (sign extended)*/
+        // little endian (lsb first)
         unsigned int shift = 0;
         while (--width && shift < sizeof(long)*8)
         {
@@ -98,14 +116,32 @@ scanLong(const StreamFormat& format, const char* input, long& value)
         }
         if (width == 0)
         {
-            val |= ((signed char) input[length++]) << shift;
+            if (format.flags & zero_flag)
+            {
+                // fill with zero
+                val |= ((unsigned char) input[length++]) << shift;
+            }
+            else
+            {
+                // fill with sign
+                val |= ((signed char) input[length++]) << shift;
+            }
         }
         length += width; // ignore upper bytes not fitting in long
     }
     else
     {
-        // big endian (sign extended)*/
-        val = (signed char) input[length++];
+        // big endian  (msb first)
+        if (format.flags & zero_flag)
+        {
+            // fill with zero
+            val = (unsigned char) input[length++];
+        }
+        else
+        {
+            // fill with sign
+            val = (signed char) input[length++];
+        }
         while (--width)
         {
             val <<= 8;

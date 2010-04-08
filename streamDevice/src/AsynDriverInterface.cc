@@ -59,12 +59,12 @@ writeRequest()
     pasynManager->queueRequest()
     when request is handled
         pasynOctet->flush()
-        pasynOctet->writeRaw()
-        if writeRaw() times out
+        pasynOctet->write()
+        if write() times out
             writeCallback(StreamIoTimeout)
-        if writeRaw fails otherwise
+        if write fails otherwise
             writeCallback(StreamIoFault)
-        if writeRaw succeeds and all bytes have been written
+        if write succeeds and all bytes have been written
             writeCallback(StreamIoSuccess)
         if not all bytes can be written
             pasynManager->queueRequest() to write next part
@@ -129,9 +129,11 @@ static const char* asynStatusStr[] = {
     "asynSuccess", "asynTimeout", "asynOverflow", "asynError"
 };
 
+#ifndef NO_TEMPORARY
 static const char* eomReasonStr[] = {
     "NONE", "CNT", "EOS", "CNT+EOS", "END", "CNT+END", "EOS+END", "CNT+EOS+END"
 };
+#endif
 
 class AsynDriverInterface : StreamBusInterface
 #ifdef EPICS_3_14
@@ -186,7 +188,7 @@ class AsynDriverInterface : StreamBusInterface
     bool supportsEvent();
     bool supportsAsyncRead();
     bool connectRequest(unsigned long connecttimeout_ms);
-    bool disconnect();
+    bool disconnectRequest();
     void finish();
 
 #ifdef EPICS_3_14
@@ -458,17 +460,22 @@ connectToBus(const char* busname, int addr)
 bool AsynDriverInterface::
 lockRequest(unsigned long lockTimeout_ms)
 {
+    int connected;
+    asynStatus status;
+    
     debug("AsynDriverInterface::lockRequest(%s, %ld msec)\n",
         clientName(), lockTimeout_ms);
-    asynStatus status;
     lockTimeout = lockTimeout_ms ? lockTimeout_ms*0.001 : -1.0;
-    if (!lockTimeout_ms)
-    {
-        if (!connectToAsynPort()) return false;
-    }
-    
     ioAction = Lock;
-    status = pasynManager->queueRequest(pasynUser, priority(),
+    status = pasynManager->isConnected(pasynUser, &connected);
+    if (status != asynSuccess)
+    {
+        error("%s: pasynManager->isConnected() failed: %s\n",
+            clientName(), pasynUser->errorMessage);
+        return false;
+    }
+    status = pasynManager->queueRequest(pasynUser,
+        connected ? priority() : asynQueuePriorityConnect,
         lockTimeout);
     if (status != asynSuccess)
     {
@@ -497,6 +504,8 @@ connectToAsynPort()
             clientName(), pasynUser->errorMessage);
         return false;
     }
+    debug("AsynDriverInterface::connectToAsynPort(%s) is %s connected\n",
+        clientName(), connected ? "already" : "not yet");
     if (!connected)
     {
         status = pasynCommon->connect(pvtCommon, pasynUser);
@@ -510,6 +519,12 @@ connectToAsynPort()
             return false;
         }
     }
+//  We probably should set REN=1 prior to sending but this
+//  seems to hang up the device every other time.
+//     if (pasynGpib)
+//     {
+//         pasynGpib->ren(pvtGpib, pasynUser, 1);
+//     }
     return true;
 }
 
@@ -517,10 +532,12 @@ connectToAsynPort()
 void AsynDriverInterface::
 lockHandler()
 {
+    int connected;
     debug("AsynDriverInterface::lockHandler(%s)\n",
         clientName());
     pasynManager->blockProcessCallback(pasynUser, false);
-    lockCallback(StreamIoSuccess);
+    connected = connectToAsynPort();
+    lockCallback(connected ? StreamIoSuccess : StreamIoFault);
 }
 
 // interface function: we don't need exclusive access any more
@@ -590,21 +607,27 @@ writeHandler()
     
     size_t streameoslen;
     const char* streameos = getOutTerminator(streameoslen);
-    if (streameos) // stream has added eos
+    int oldeoslen = -1;
+    char oldeos[16];
+    if (streameos) // stream has already added eos, don't do it again in asyn
     {
-        char asynEos[10];
-        int asynEosLen;
-       
-        pasynOctet->getOutputEos(pvtOctet, pasynUser, asynEos, sizeof(asynEos), &asynEosLen);
-        pasynOctet->setOutputEos(pvtOctet, pasynUser, "", 0);
-        status = pasynOctet->write(pvtOctet, pasynUser,
-            outputBuffer, outputSize, &written);
-        pasynOctet->setOutputEos(pvtOctet, pasynUser, asynEos, asynEosLen);
+        // clear terminator for asyn
+        status = pasynOctet->getOutputEos(pvtOctet,
+            pasynUser, oldeos, sizeof(oldeos)-1, &oldeoslen);
+        if (status != asynSuccess)
+        {
+            oldeoslen = -1;
+            // No EOS support?
+        }
+        pasynOctet->setOutputEos(pvtOctet, pasynUser,
+            NULL, 0);
     }
-    else // asyn should add eos
+    status = pasynOctet->write(pvtOctet, pasynUser,
+        outputBuffer, outputSize, &written);
+    if (oldeoslen >= 0) // restore asyn terminator
     {
-        status = pasynOctet->write(pvtOctet, pasynUser,
-            outputBuffer, outputSize, &written);
+        pasynOctet->setOutputEos(pvtOctet, pasynUser,
+            oldeos, oldeoslen);
     }
     switch (status)
     {
@@ -639,6 +662,16 @@ writeHandler()
             return;
         case asynError:
             error("%s: asynError in write: %s\n",
+                clientName(), pasynUser->errorMessage);
+            writeCallback(StreamIoFault);
+            return;
+        case asynDisconnected:
+            error("%s: asynDisconnected in write: %s\n",
+                clientName(), pasynUser->errorMessage);
+            writeCallback(StreamIoFault);
+            return;
+        case asynDisabled:
+            error("%s: asynDisabled in write: %s\n",
                 clientName(), pasynUser->errorMessage);
             writeCallback(StreamIoFault);
             return;
@@ -756,7 +789,7 @@ readHandler()
     {
         // In AsyncRead mode just poll
         // and read as much as possible
-        pasynUser->timeout = readTimeout;
+        pasynUser->timeout = 0.0;
         bytesToRead = buffersize;
     }
     else
@@ -764,7 +797,7 @@ readHandler()
         pasynUser->timeout = replyTimeout;
     }
     bool waitForReply = true;
-    int received;
+    size_t received;
     int eomReason;
     asynStatus status;
     long readMore;
@@ -776,8 +809,8 @@ readHandler()
         eomReason = 0;
         
         status = pasynOctet->read(pvtOctet, pasynUser,
-            buffer, bytesToRead, (size_t*)&received, &eomReason);
-        if (ioAction != AsyncRead || status != asynTimeout)
+            buffer, bytesToRead, &received, &eomReason);
+        if (ioAction == Read || status != asynTimeout)
         {
             debug("AsynDriverInterface::readHandler(%s): "
                 "read(..., bytesToRead=%d, ...) [timeout=%f seconds] = %s\n",
@@ -789,14 +822,14 @@ readHandler()
         switch (status)
         {
             case asynSuccess:
-                if (ioAction == AsyncRead)
+                if (ioAction != Read)
                 {
 #ifndef NO_TEMPORARY
                     debug("AsynDriverInterface::readHandler(%s): "
                         "AsyncRead poll: received %d of %d bytes \"%s\" "
                         "eomReason=%s [data ignored]\n",
-                        clientName(), received, bytesToRead,
-                        StreamBuffer(buffer, received).expand()(),
+                        clientName(), (int)received, bytesToRead,
+                        StreamBuffer(buffer, (int)received).expand()(),
                         eomReasonStr[eomReason&0x7]);
 #endif
                     // ignore what we got from here.
@@ -809,8 +842,8 @@ readHandler()
                 debug("AsynDriverInterface::readHandler(%s): "
                         "received %d of %d bytes \"%s\" "
                         "eomReason=%s\n",
-                    clientName(), received, bytesToRead,
-                    StreamBuffer(buffer, received).expand()(),
+                    clientName(), (int)received, bytesToRead,
+                    StreamBuffer(buffer, (int)received).expand()(),
                     eomReasonStr[eomReason&0x7]);
 #endif
                 // asynOctet->read() cuts off terminator, but:
@@ -830,7 +863,7 @@ readHandler()
                     size_t i;
                     for (i = 0; i < deveoslen; i++, received++)
                     {
-                        if (received >= 0) buffer[received] = deveos[i];
+                        if ((int)received >= 0) buffer[received] = deveos[i];
                         // It is safe to add to buffer here, because
                         // the terminator was already there before
                         // asynOctet->read() had cut it.
@@ -868,7 +901,7 @@ readHandler()
                 debug("AsynDriverInterface::readHandler(%s): "
                         "ioAction=%s, timeout after %d of %d bytes \"%s\"\n",
                     clientName(), ioActionStr[ioAction],
-                    received, bytesToRead,
+                    (int)received, bytesToRead,
                     StreamBuffer(buffer, received).expand()());
 #endif
                 if (ioAction == AsyncRead || ioAction == AsyncReadMore)
@@ -901,6 +934,15 @@ readHandler()
                     clientName(), pasynUser->errorMessage);
                 readCallback(StreamIoFault, buffer, received);
                 break;
+            case asynDisconnected:
+                error("%s: asynDisconnected in read: %s\n",
+                    clientName(), pasynUser->errorMessage);
+                readCallback(StreamIoFault, buffer, received);
+                return;
+            case asynDisabled:
+                error("%s: asynDisabled in read: %s\n",
+                    clientName(), pasynUser->errorMessage);
+                readCallback(StreamIoFault, buffer, received);
         }
         if (!readMore) break;
         if (readMore > 0)
@@ -935,25 +977,11 @@ void intrCallbackOctet(void* /*pvt*/, asynUser *pasynUser,
 // Problems here:
 // 1. We get this message too when we are the poller.
 //    Thus we have to ignore what we got from polling.
-// 2. We get this message multiple times when original reader
-//    reads in chunks.
-// 3. eomReason=ASYN_EOM_CNT when message was too long for
+// 2. eomReason=ASYN_EOM_CNT when message was too long for
 //    internal buffer of asynDriver.
 
-    if (interface->ioAction == AsyncRead ||
-        interface->ioAction == AsyncReadMore)
-    {
-        interface->asynReadHandler(data, numchars, eomReason);
-    }
-    else
-    {
-#ifndef NO_TEMPORARY
-    debug("AsynDriverInterface::intrCallbackOctet(%s, buffer=\"%s\", "
-            "received=%d eomReason=%s) ioAction=%s\n",
-        interface->clientName(), StreamBuffer(data, numchars).expand()(),
-        numchars, eomReasonStr[eomReason&0x7], ioActionStr[interface->ioAction]);
-#endif
-    }
+    if (!interruptAccept) return; // too early to process records
+    interface->asynReadHandler(data, numchars, eomReason);
 }
 
 // get asynchronous input
@@ -1187,6 +1215,9 @@ connectRequest(unsigned long connecttimeout_ms)
     double queueTimeout = connecttimeout_ms*0.001;
     asynStatus status;
     ioAction = Connect;
+    
+    debug("AsynDriverInterface::connectRequest %s\n",
+        clientName());
     status = pasynManager->queueRequest(pasynUser,
         asynQueuePriorityConnect, queueTimeout);
     if (status != asynSuccess)
@@ -1204,49 +1235,51 @@ connectRequest(unsigned long connecttimeout_ms)
 void AsynDriverInterface::
 connectHandler()
 {
-    asynStatus status;
-    status = pasynCommon->connect(pvtCommon, pasynUser);
-    if (status != asynSuccess)
-    {
-        error("%s connectRequest: pasynCommon->connect() failed: %s\n",
-            clientName(), pasynUser->errorMessage);
-        connectCallback(StreamIoFault);
-        return;
-    }
-    connectCallback(StreamIoSuccess);
+    connectCallback(connectToAsynPort() ? StreamIoSuccess : StreamIoFault);
 }
 
 bool AsynDriverInterface::
-disconnect()
+disconnectRequest()
 {
     asynStatus status;
     ioAction = Disconnect;
+    
+    debug("AsynDriverInterface::disconnectRequest %s\n",
+        clientName());
     status = pasynManager->queueRequest(pasynUser,
         asynQueuePriorityConnect, 0.0);
     if (status != asynSuccess)
     {
-        error("%s disconnect: pasynManager->queueRequest() failed: %s\n",
+        error("%s disconnectRequest: pasynManager->queueRequest() failed: %s\n",
             clientName(), pasynUser->errorMessage);
         return false;
     }
     // continues with:
     //    handleRequest() -> disconnectHandler()
-    // or handleTimeout()
-    // (does not expect callback)
     return true;
 }
 
 void AsynDriverInterface::
 disconnectHandler()
 {
+    int connected;
     asynStatus status;
-    status = pasynCommon->disconnect(pvtCommon, pasynUser);
-    if (status != asynSuccess)
+
+    pasynManager->isConnected(pasynUser, &connected);
+    debug("AsynDriverInterface::disconnectHandler %s is %s disconnected\n",
+        clientName(), !connected ? "already" : "not yet");
+    if (connected)
     {
-        error("%s connectRequest: pasynCommon->disconnect() failed: %s\n",
-            clientName(), pasynUser->errorMessage);
-        return;
+        status = pasynCommon->disconnect(pvtCommon, pasynUser);
+        if (status != asynSuccess)
+        {
+            error("%s connectRequest: pasynCommon->disconnect() failed: %s\n",
+                clientName(), pasynUser->errorMessage);
+            disconnectCallback(StreamIoFault);
+            return;
+        }
     }
+    disconnectCallback(StreamIoSuccess);
 }
 
 void AsynDriverInterface::
@@ -1256,6 +1289,12 @@ finish()
         clientName());
     cancelTimer();
     ioAction = None;
+//     if (pasynGpib)
+//     {
+//         // Release GPIB device the the end of the protocol
+//         // to re-enable local buttons.
+//         pasynGpib->ren(pvtGpib, pasynUser, 0);
+//     }
     debug("AsynDriverInterface::finish(%s) done\n",
         clientName());
 }
@@ -1266,6 +1305,8 @@ void handleRequest(asynUser* pasynUser)
 {
     AsynDriverInterface* interface =
         static_cast<AsynDriverInterface*>(pasynUser->userPvt);
+    debug("AsynDriverInterface::handleRequest(%s) %s\n",
+        interface->clientName(), ioActionStr[interface->ioAction]);
     switch (interface->ioAction)
     {
         case None:
@@ -1300,6 +1341,8 @@ void handleTimeout(asynUser* pasynUser)
 {
     AsynDriverInterface* interface =
         static_cast<AsynDriverInterface*>(pasynUser->userPvt);
+    debug("AsynDriverInterface::handleTimeout(%s)\n",
+        interface->clientName());
     switch (interface->ioAction)
     {
         case Lock:
@@ -1318,7 +1361,9 @@ void handleTimeout(asynUser* pasynUser)
             interface->connectCallback(StreamIoTimeout);
             break;
         case Disconnect:
-            // not interested in callback
+            error("AsynDriverInterface %s: disconnect timeout\n",
+                interface->clientName());
+            // should not happen because of infinite timeout
             break;
         // No AsyncRead here because we don't use timeout when polling
         default:

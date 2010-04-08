@@ -18,7 +18,7 @@
 *                                                              *
 ***************************************************************/
 
-#include <devStream.h>
+#include "devStream.h"
 #include <biRecord.h>
 #include <string.h>
 #include <epicsExport.h>
@@ -90,7 +90,8 @@ static long initRecord (dbCommon *record)
 {
     biRecord *bi = (biRecord *) record;
 
-    return streamInitRecord (record, &bi->inp, readData, writeData);
+    return streamInitRecord (record, &bi->inp, readData, writeData) == ERROR ?
+        ERROR : OK;
 }
 
 struct {

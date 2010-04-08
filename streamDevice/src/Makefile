@@ -2,7 +2,7 @@
 # StreamDevice Support                                         #
 #                                                              #
 # (C) 1999 Dirk Zimoch (zimoch@delta.uni-dortmund.de)          #
-# (C) 2006 Dirk Zimoch (dirk.zimoch@psi.ch)                    #
+# (C) 2007 Dirk Zimoch (dirk.zimoch@psi.ch)                    #
 #                                                              #
 # This is the EPICS 3.14 Makefile of StreamDevice.             #
 # Normally it should not be necessary to modify this file.     #
@@ -57,7 +57,20 @@ SRCS += $(FORMATS:%=%Converter.cc)
 SRCS += $(RECORDS:%=dev%Stream.c)
 SRCS += $(STREAM_SRCS)
 
-LIB_LIBS += Com dbIoc dbStaticIoc registryIoc iocsh
+# find system wide or local PCRE header and library
+ifdef PCRE_INCLUDE
+RegexpConverter_INCLUDES += -I$(PCRE_INCLUDE)
+endif
+ifdef PCRE
+LIB_LIBS += pcre
+else
+ifneq ($(words $(PCRE_LIB) $(PCRE_INCLUDE)),0)
+LIB_SYS_LIBS += pcre
+SHRLIB_DEPLIB_DIRS += $(PCRE_LIB)
+endif
+endif
+
+LIB_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 ifeq ($(USE_MEMGUARD),YES)
 # memguard looks for memory leaks (gcc only)

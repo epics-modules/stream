@@ -160,7 +160,9 @@ scanLong(const StreamFormat& fmt, const char* input, long& value)
     int length = -1;
     if (fmt.flags & skip_flag)
     {
-        if (sscanf(input, fmt.info, &length) < 0) return -1;
+        /* can't use return value on vxWorks: sscanf with %* format
+           returns -1 at end of string whether value is found or not */
+        sscanf(input, fmt.info, &length);
     }
     else
     {
@@ -216,7 +218,9 @@ scanDouble(const StreamFormat& fmt, const char* input, double& value)
     int length = -1;
     if (fmt.flags & skip_flag)
     {
-        if (sscanf(input, fmt.info, &length) < 0) return -1;
+        /* can't use return value on vxWorks: sscanf with %* format
+           returns -1 at end of string whether value is found or not */
+        sscanf(input, fmt.info, &length);
     }
     else
     {
@@ -274,12 +278,14 @@ scanString(const StreamFormat& fmt, const char* input,
     if (*input == '\0')
     {
         // match empty string
-        value[0] = '\0';
+        if (value) value[0] = '\0';
         return 0;
     }
     if (fmt.flags & skip_flag)
     {
-        if (sscanf(input, fmt.info, &length) < 0) return -1;
+        /* can't use return value on vxWorks: sscanf with %* format
+           returns -1 at end of string whether value is found or not */
+        sscanf(input, fmt.info, &length);
     }
     else
     {
@@ -288,7 +294,7 @@ scanString(const StreamFormat& fmt, const char* input,
         if (maxlen <= fmt.width || fmt.width == 0)
         {
             // assure not to read too much
-            sprintf(tmpformat, "%%%d%c%%n", maxlen-1, fmt.conv);
+            sprintf(tmpformat, "%%%ld%c%%n", (long)maxlen-1, fmt.conv);
             f = tmpformat;
         }
         else
@@ -384,7 +390,7 @@ parse(const StreamFormat& fmt, StreamBuffer& info,
             fmt.prec, fmt.conv);
         return false;
     }
-    info.printf("%%%d[", fmt.width);
+    info.printf("%%%s%d[", fmt.flags & skip_flag ? "*" : "", fmt.width);
     while (*source && *source != ']')
     {
         if (*source == esc) source++;
@@ -406,7 +412,9 @@ scanString(const StreamFormat& fmt, const char* input,
     int length = -1;
     if (fmt.flags & skip_flag)
     {
-        if (sscanf (input, fmt.info, &length) < 0) return -1;
+        /* can't use return value on vxWorks: sscanf with %* format
+           returns -1 at end of string whether value is found or not */
+        sscanf(input, fmt.info, &length);
     }
     else
     {
@@ -416,7 +424,7 @@ scanString(const StreamFormat& fmt, const char* input,
         {
             const char *p = strchr (fmt.info, '[');
             // assure not to read too much
-            sprintf(tmpformat, "%%%d%s", maxlen-1, p);
+            sprintf(tmpformat, "%%%ld%s", (long)maxlen-1, p);
             f = tmpformat;
         }
         else

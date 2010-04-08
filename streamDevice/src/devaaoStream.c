@@ -20,7 +20,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <devStream.h>
+#include "devStream.h"
 #include <aaoRecord.h>
 #include <epicsExport.h>
 
@@ -280,7 +280,8 @@ static long initRecord (dbCommon *record)
             record->name);
         return ERROR;
     }
-    return streamInitRecord (record, &aao->out, readData, writeData);
+    return streamInitRecord (record, &aao->out, readData, writeData) == ERROR ?
+        ERROR : OK;
 }
 
 struct {

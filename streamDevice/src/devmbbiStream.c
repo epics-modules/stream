@@ -19,7 +19,7 @@
 *                                                              *
 ***************************************************************/
 
-#include <devStream.h>
+#include "devStream.h"
 #include <mbbiRecord.h>
 #include <string.h>
 #include <epicsExport.h>
@@ -114,7 +114,8 @@ static long initRecord (dbCommon *record)
     mbbiRecord *mbbi = (mbbiRecord *) record;
 
     mbbi->mask <<= mbbi->shft;
-    return streamInitRecord (record, &mbbi->inp, readData, writeData);
+    return streamInitRecord (record, &mbbi->inp, readData, writeData) == ERROR ?
+        ERROR : OK;
 }
 
 struct {

@@ -17,7 +17,7 @@
 *                                                              *
 ***************************************************************/
 
-#include <devStream.h>
+#include "devStream.h"
 #include <postfix.h>
 #include <calcoutRecord.h>
 #include <epicsExport.h>
@@ -68,7 +68,8 @@ static long initRecord (dbCommon *record)
 {
     calcoutRecord *co = (calcoutRecord *) record;
 
-    return streamInitRecord (record, &co->out, readData, writeData);
+    return streamInitRecord (record, &co->out, readData, writeData) == ERROR ?
+        ERROR : OK;
 }
 
 struct {

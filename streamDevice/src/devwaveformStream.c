@@ -18,7 +18,8 @@
 *                                                              *
 ***************************************************************/
 
-#include <devStream.h>
+#include "devStream.h"
+#include <errlog.h>
 #include <waveformRecord.h>
 #include <string.h>
 #include <epicsExport.h>
@@ -271,7 +272,8 @@ static long initRecord (dbCommon *record)
 {
     waveformRecord *wf = (waveformRecord *) record;
 
-    return streamInitRecord (record, &wf->inp, readData, writeData);
+    return streamInitRecord (record, &wf->inp, readData, writeData) == ERROR ?
+        ERROR : OK;
 }
 
 struct {

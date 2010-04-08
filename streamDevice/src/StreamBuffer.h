@@ -29,11 +29,11 @@
 
 class StreamBuffer
 {
+    char local[64];
     long len;
     long cap;
     long offs;
     char* buffer;
-    char local[64];
 
     void grow(long);
     void init(const void*, long);
@@ -103,11 +103,11 @@ public:
     // reserve: reserve size bytes of memory and return
     // pointer to that memory (for copying something to it)
     char* reserve(long size)
-        {check(size); char* p=buffer+offs+len; len+=size; return p; }
+        {grow(size); char* p=buffer+len; len+=size; return p;}
 
     // append: append data at the end of the buffer
-    StreamBuffer& append(char c)
-        {check(1); buffer[offs+len++]=c; return *this;}
+    StreamBuffer& append(char c, long count=1)
+        {check(count); while(count-->0) buffer[offs+len++]=c; return *this;}
 
     StreamBuffer& append(const void* s, long size);
 
@@ -144,7 +144,7 @@ public:
     StreamBuffer& replace(long pos, long length, const StreamBuffer& s)
         {return replace(pos, length, s.buffer+s.offs, s.len);}
 
-    // replace: delete part of buffer
+    // remove: delete from start/pos
     StreamBuffer& remove(long pos, long length)
         {return replace(pos, length, NULL, 0);}
 
@@ -152,7 +152,7 @@ public:
         {if (length>len) length=len;
          offs+=length; len-=length; return *this;}
 
-    // replace: delete end of buffer
+    // truncate: delete end of buffer
     StreamBuffer& truncate(long pos)
         {return replace(pos, len, NULL, 0);}
 

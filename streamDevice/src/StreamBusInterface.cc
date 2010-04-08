@@ -20,7 +20,11 @@
 #include "StreamBusInterface.h"
 
 const char* StreamIoStatusStr[] = {
-    "StreamIoSuccess", "ioTimeout", "ioNoReply", "ioEnd", "ioFault"
+    "StreamIoSuccess",
+    "StreamIoTimeout",
+    "StreamIoNoReply",
+    "StreamIoEnd",
+    "StreamIoFault"
 };
 
 StreamBusInterfaceRegistrarBase* StreamBusInterfaceRegistrarBase::first;
@@ -89,7 +93,7 @@ connectRequest (unsigned long)
 }
 
 bool StreamBusInterface::
-disconnect ()
+disconnectRequest ()
 {
     return false;
 }
@@ -134,6 +138,11 @@ eventCallback(StreamIoStatus)
 
 void StreamBusInterface::Client::
 connectCallback(StreamIoStatus)
+{
+}
+
+void StreamBusInterface::Client::
+disconnectCallback(StreamIoStatus)
 {
 }
 

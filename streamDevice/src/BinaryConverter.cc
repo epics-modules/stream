@@ -38,11 +38,11 @@ parse(const StreamFormat& format, StreamBuffer& info,
     if (format.conv == 'B')
     {
         // user defined characters for %B (next 2 in source)
-        if (!*source )
+        if (*source)
         {
             if (*source == esc) source++;
             info.append(*source++);
-            if (!*source)
+            if (*source)
             {
                 if (*source == esc) source++;
                 info.append(*source++);
@@ -65,32 +65,60 @@ printLong(const StreamFormat& format, StreamBuffer& output, long value)
     {
         // find number of significant bits
         prec = sizeof (value) * 8;
-        while (prec && (value & (1 << (prec - 1))) == 0) prec--;
+        while (prec && (value & (1L << (prec - 1))) == 0) prec--;
     }
     if (prec == 0) prec++; // print at least one bit
     int width = prec;
     if (format.width > width) width = format.width;
     char zero = format.info[0];
     char one = format.info[1];
-    if (!(format.flags & left_flag))
+    char fill = (format.flags & zero_flag) ? zero : ' ';
+    if (format.flags & alt_flag)
     {
-        // pad left
-        char fill = (format.flags & zero_flag) ? zero : ' ';
-        while (width > prec)
+        // little endian (least significant bit first)
+        if (!(format.flags & left_flag))
         {
-            output.append(fill);
+            // pad left
+            while (width > prec)
+            {
+                output.append(' ');
+                width--;
+            }
+        }
+        while (prec--)
+        {
+            output.append((value & 1) ? one : zero);
+            value >>= 1;
             width--;
         }
+        while (width--)
+        {
+            // pad right
+            output.append(fill);
+        }
     }
-    while (prec--)
+    else
     {
-        output.append((value & (1 << prec)) ? one : zero);
-        width--;
-    }
-    while (width--)
-    {
-        // pad right
-        output.append(' ');
+        // big endian (most significant bit first)
+        if (!(format.flags & left_flag))
+        {
+            // pad left
+            while (width > prec)
+            {
+                output.append(fill);
+                width--;
+            }
+        }
+        while (prec--)
+        {
+            output.append((value & (1L << prec)) ? one : zero);
+            width--;
+        }
+        while (width--)
+        {
+            // pad right
+            output.append(' ');
+        }
     }
     return true;
 }
@@ -102,14 +130,28 @@ scanLong(const StreamFormat& format, const char* input, long& value)
     int width = format.width;
     if (width == 0) width = -1;
     int length = 0;
-    while (isspace(input[++length])); // skip whitespaces
+    while (isspace(input[length])) length++; // skip whitespaces
     char zero = format.info[0];
     char one = format.info[1];
     if (input[length] != zero && input[length] != one) return -1;
-    while (width-- && (input[length] == zero || input[length] == one))
+    if (format.flags & alt_flag)
     {
-        val <<= 1;
-        if (input[length++] == one) val |= 1;
+        // little endian (least significan bit first)
+        long mask = 1;
+        while (width-- && (input[length] == zero || input[length] == one))
+        {
+            if (input[length++] == one) val |= mask;
+            mask <<= 1;
+        }
+    }
+    else
+    {
+        // big endian (most significan bit first)
+        while (width-- && (input[length] == zero || input[length] == one))
+        {
+            val <<= 1;
+            if (input[length++] == one) val |= 1;
+        }
     }
     value = val;
     return length;

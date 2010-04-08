@@ -60,7 +60,8 @@ grow(long minsize)
     // make space for minsize + 1 (for termination) bytes
     char* newbuffer;
     long newcap;
-    if (minsize > 10000)
+#ifdef EXPLODE
+    if (minsize > 1000000)
     {
         // crude trap against infinite grow
         error ("StreamBuffer exploded growing from %ld to %ld chars. Exiting\n",
@@ -83,6 +84,7 @@ grow(long minsize)
         fprintf(stderr, "\n");
         abort();
     }
+#endif
     if (minsize < cap)
     {
         // just move contents to start of buffer and clear end
@@ -133,7 +135,7 @@ find(const void* m, long size, long start) const
         start += len;
         if (start < 0) start = 0;
     }
-    if (start >= len-size+1) return -1; // find nothing after end
+    if (start+size > len) return -1; // find nothing after end
     if (!m || size <= 0) return start; // find empty string at start
     const char* s = static_cast<const char*>(m);
     char* b = buffer+offs;
@@ -141,12 +143,12 @@ find(const void* m, long size, long start) const
     long i;
     while ((p = static_cast<char*>(memchr(p, s[0], b-p+len-size+1))))
     {
-        i = 1;
-        while (p[i] == s[i])
+        for (i = 1; i < size; i++)
         {
-            if (++i >= size) return p-b;
+            if (p[i] != s[i]) goto next;
         }
-        p++;
+        return p-b;
+next:   p++;
     }
     return -1;
 }
@@ -192,6 +194,7 @@ replace(long remstart, long remlen, const void* ins, long inslen)
     {
         // optimize remove of bufferstart
         offs += remlen;
+        len -= remlen;
         return *this;
     }
     if (inslen < 0) inslen = 0;

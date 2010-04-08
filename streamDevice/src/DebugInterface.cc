@@ -93,12 +93,12 @@ lockRequest(unsigned long lockTimeout_ms)
 
     // Debug interface is non-blocking,
     // thus we can call lockCallback() immediately.
-    lockCallback(ioSuccess);
+    lockCallback(StreamIoSuccess);
 
     // A blocking interface would send a message that requests
     // exclusive access to the interface thread.
     // Once the interface is available, the interface thread
-    // would call lockCallback(ioSuccess).
+    // would call lockCallback(StreamIoSuccess).
     // If lockTimeout_ms expires, the interface would
     // call lockCallback(ioTimeout).
 
@@ -119,7 +119,7 @@ unlock()
 
     // debug interface is non-blocking, thus unlock does nothing.
 
-    // A blocking interface would call lockCallback(ioSuccess) now
+    // A blocking interface would call lockCallback(StreamIoSuccess) now
     // for the next interface that had called lockRequest.
 
     return true;
@@ -129,7 +129,7 @@ unlock()
 // We want to write something
 // This method will only be called by StreamDevice when locked.
 // I.e. lockRequest() has been called and the interface
-// has called lockCallback(ioSuccess).
+// has called lockCallback(StreamIoSuccess).
 // It may be called several times before unlock() is called.
 // Return false if the write request cannot be accepted.
 bool DebugInterface::
@@ -140,7 +140,7 @@ writeRequest(const void* output, size_t size, unsigned long writeTimeout_ms)
 
     // Debug interface is non-blocking,
     // thus we can call writeCallback() immediately.
-    writeCallback(ioSuccess);
+    writeCallback(StreamIoSuccess);
 
     // A blocking interface would send a message that requests
     // write access to the interface thread.
@@ -153,7 +153,7 @@ writeRequest(const void* output, size_t size, unsigned long writeTimeout_ms)
     // the interface would return false now or call writeCallback(ioFault)
     // later when it finds out.
     // Once the interface has completed writing, the interface thread
-    // would call writeCallback(ioSuccess).
+    // would call writeCallback(StreamIoSuccess).
 
     return true;
 }
@@ -180,7 +180,7 @@ readRequest(unsigned long replyTimeout_ms, unsigned long readTimeout_ms,
     // Debug interface is non-blocking,
     // thus we can call writeCallback() immediately.
     const char input [] = "Receviced input 3.1415\r\n";
-    readCallback(ioEnd, input, sizeof(input));
+    readCallback(StreamIoEnd, input, sizeof(input));
 
     // A blocking interface would send a message that requests
     // read access to the interface thread.
@@ -195,7 +195,7 @@ readRequest(unsigned long replyTimeout_ms, unsigned long readTimeout_ms,
     // readCallback(ioTimeout, input, inputlength)
     // with all input received so far.
     // For each reveived chunk, the interface would call
-    // readCallback(ioSuccess, input, inputlength)
+    // readCallback(StreamIoSuccess, input, inputlength)
     // and check its return value.
     // The return value is 0 if no more input is expected, i.e.
     // the interface would tell the low-level driver that
@@ -207,11 +207,11 @@ readRequest(unsigned long replyTimeout_ms, unsigned long readTimeout_ms,
     // In the both cases where more input is expected, the interface
     // would do another read and call readCallback() again.
     // The return value needs only to be checked if readCallback()
-    // is called with ioSuccess as the first argument.
+    // is called with StreamIoSuccess as the first argument.
     // If the interface received a signal from the low-level driver
     // telling that input has terminated (e.g. EOS in GPIB, EOF when
     // reading file or socket, ...) it would call
-    // readCallback(ioEnd, input, inputlength).
+    // readCallback(StreamIoEnd, input, inputlength).
     // If anything is wrong with the bus (e.g. unpugged cable),
     // the interface would immediately return false now or
     // call readCallback(ioFault) later when it finds out.

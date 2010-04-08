@@ -18,7 +18,7 @@
 *                                                              *
 ***************************************************************/
 
-#include <devStream.h>
+#include "devStream.h"
 #include <stringoutRecord.h>
 #include <epicsExport.h>
 
@@ -48,7 +48,8 @@ static long initRecord (dbCommon *record)
 {
     stringoutRecord *so = (stringoutRecord *) record;
 
-    return streamInitRecord (record, &so->out, readData, writeData);
+    return streamInitRecord (record, &so->out, readData, writeData) == ERROR ?
+        ERROR : OK;
 }
 
 struct {
