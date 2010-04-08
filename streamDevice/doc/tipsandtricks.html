@@ -54,7 +54,7 @@ read {in "new value = %f";}
 <code>
 record (ai, "$(RECORD)") {<br>
 &nbsp;&nbsp;field (DTYP, "stream")<br>
-&nbsp;&nbsp;field (INP, "@(DEVICETYPE).proto read $(BUS)")<br>
+&nbsp;&nbsp;field (INP, "@$(DEVICETYPE).proto read $(BUS)")<br>
 &nbsp;&nbsp;field (SCAN, "I/O Intr")<br>
 }
 </code>
@@ -121,7 +121,7 @@ record (calcout, "$(RECORD)") {<br>
 &nbsp;&nbsp;field (INPC, "$(C_RECORD)")<br>
 &nbsp;&nbsp;field (CALC, "0")<br>
 &nbsp;&nbsp;field (DTYP, "stream")<br>
-&nbsp;&nbsp;field (OUT, "@(DEVICETYPE).proto write_ABC $(BUS)")<br>
+&nbsp;&nbsp;field (OUT, "@$(DEVICETYPE).proto write_ABC $(BUS)")<br>
 }
 </code>
 </p>
@@ -146,7 +146,7 @@ other records (device name) in parentheses.
 <code>
 record (stringout, "$(DEVICE):getimage") {<br>
 &nbsp;&nbsp;field (DTYP, "stream")<br>
-&nbsp;&nbsp;field (OUT, "@(DEVICETYPE).proto acquire($(DEVICE)) $(BUS)")<br>
+&nbsp;&nbsp;field (OUT, "@$(DEVICETYPE).proto acquire($(DEVICE)) $(BUS)")<br>
 }
 </code>
 </p>
@@ -190,12 +190,12 @@ read_B {in "A=%*f, B=%f";}
 <code>
 record (ai, "$(DEVICE):A") {<br>
 &nbsp;&nbsp;field (DTYP, "stream")<br>
-&nbsp;&nbsp;field (INP, "@(DEVICETYPE).proto read_A $(BUS)")<br>
+&nbsp;&nbsp;field (INP, "@$(DEVICETYPE).proto read_A $(BUS)")<br>
 &nbsp;&nbsp;field (SCAN, "1 second")<br>
 }<br>
 record (ai, "$(DEVICE):B") {<br>
 &nbsp;&nbsp;field (DTYP, "stream")<br>
-&nbsp;&nbsp;field (INP, "@(DEVICETYPE).proto read_B $(BUS)")<br>
+&nbsp;&nbsp;field (INP, "@$(DEVICETYPE).proto read_B $(BUS)")<br>
 &nbsp;&nbsp;field (SCAN, "I/O Intr")<br>
 }
 </code>
@@ -228,7 +228,7 @@ read_AB {out "GET A,B"; in "A=%f, B=%(\$1.VAL)f";}
 <code>
 record (ai, "$(DEVICE):A") {<br>
 &nbsp;&nbsp;field (DTYP, "stream")<br>
-&nbsp;&nbsp;field (INP, "@(DEVICETYPE).proto read_AB($(DEVICE):B) $(BUS)")<br>
+&nbsp;&nbsp;field (INP, "@$(DEVICETYPE).proto read_AB($(DEVICE):B) $(BUS)")<br>
 &nbsp;&nbsp;field (SCAN, "1 second")<br>
 }<br>
 record (ai, "$(DEVICE):B") {<br>
@@ -266,7 +266,7 @@ read_current {out "CURRENT?"; in "CURRENT %f A"; @mismatch {in "%(\1.VAL)39c";}}
 <code>
 record (ai, "$(DEVICE):readcurrent") {<br>
 &nbsp;&nbsp;field (DTYP, "stream")<br>
-&nbsp;&nbsp;field (INP, "@(DEVICETYPE).proto read_current($(DEVICE):message) $(BUS)")<br>
+&nbsp;&nbsp;field (INP, "@$(DEVICETYPE).proto read_current($(DEVICE):message) $(BUS)")<br>
 }<br>
 record (stringin, "$(DEVICE):message") {<br>
 }
