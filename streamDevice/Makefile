@@ -9,13 +9,15 @@ ifeq ($(wildcard $(TOP)/configure),)
   CONFIG = $(TOP)/config
 else
   # EPICS R3.14
-  include $(TOP)/configure/CONFIG_APP
+  include $(TOP)/configure/CONFIG
   ifneq ($(words $(CALC) $(SYNAPPS)), 0)
     # with synApps calc module (contains scalcout)
     DIRS += srcSynApps
+    srcSynApps_DEPEND_DIRS = src
   endif
 endif
 
 DIRS += streamApp
+streamApp_DEPEND_DIRS = src srcSynApps
 
 include $(CONFIG)/RULES_DIRS
