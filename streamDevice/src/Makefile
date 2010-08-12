@@ -34,9 +34,9 @@ include $(TOP)/configure/CONFIG
 -include CONFIG_STREAM
 -include ../CONFIG_STREAM
 
-LIBRARY_DEFAULT = stream
+LIBRARY_IOC = stream
 
-DBD += $(LIBRARY_DEFAULT).dbd
+DBD += $(LIBRARY_IOC).dbd
 
 ifdef ASYN
 LIB_LIBS += asyn
@@ -50,7 +50,7 @@ endif
 endif
 
 ifeq ($(LOADABLE_MODULE),YES)
-SRCS += $(LIBRARY_DEFAULT)_registerRecordDeviceDriver.cpp
+SRCS += $(LIBRARY_IOC)_registerRecordDeviceDriver.cpp
 endif 
 SRCS += $(BUSSES:%=%Interface.cc)
 SRCS += $(FORMATS:%=%Converter.cc)
@@ -102,12 +102,15 @@ streamReferences: ../CONFIG_STREAM
 	done >> $@
 
 # create stream.dbd from all RECORDS
-$(COMMON_DIR)/$(LIBRARY_DEFAULT).dbd: ../CONFIG_STREAM
+$(COMMON_DIR)/$(LIBRARY_IOC).dbd: ../CONFIG_STREAM
 	@for r in $(RECORDS); \
 	do echo "device($$r,INST_IO,dev$${r}Stream,\"stream\")"; \
 	done > $@
 	@echo "driver(stream)" >> $@
 	@echo "variable(streamDebug, int)" >> $@
 	@echo "registrar(streamRegistrar)" >> $@
+
+$(LIBRARY_IOC).dbd$(DEP):
+	@echo "$@: ../CONFIG_STREAM" >> $@
 
 endif
