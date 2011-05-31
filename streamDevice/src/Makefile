@@ -84,8 +84,8 @@ include $(TOP)/configure/RULES
 
 # Update version string (contains __DATE__ and __TIME__)
 # each time make runs.
-StreamVersion$(OBJ): FORCE
-FORCE:
+#StreamVersion$(OBJ): FORCE
+#FORCE:
 
 # Add references to all registrars to main file to avoid
 # missing initialization.
