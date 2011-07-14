@@ -92,23 +92,12 @@ include $(TOP)/configure/RULES
 StreamCore$(OBJ): streamReferences
 
 streamReferences: ../CONFIG_STREAM
-	@for i in $(BUSSES); \
-	do echo "extern void* ref_$${i}Interface;"; \
-           echo "void* p$$i = ref_$${i}Interface;"; \
-	done > $@
-	@for i in $(FORMATS); \
-	do echo "extern void* ref_$${i}Converter;"; \
-           echo "void* p$$i = ref_$${i}Converter;"; \
-	done >> $@
+	perl $(TOP)/makeStreamDBD.pl 3 $@ $(BUSSES)
+	perl $(TOP)/makeStreamDBD.pl 4 $@ $(FORMATS)
 
 # create stream.dbd from all RECORDS
 $(COMMON_DIR)/$(LIBRARY_IOC).dbd: ../CONFIG_STREAM
-	@for r in $(RECORDS); \
-	do echo "device($$r,INST_IO,dev$${r}Stream,\"stream\")"; \
-	done > $@
-	@echo "driver(stream)" >> $@
-	@echo "variable(streamDebug, int)" >> $@
-	@echo "registrar(streamRegistrar)" >> $@
+	perl $(TOP)/makeStreamDBD.pl 1 $@ $(RECORDS)
 
 $(LIBRARY_IOC).dbd$(DEP):
 	@echo "$@: ../CONFIG_STREAM" >> $@
