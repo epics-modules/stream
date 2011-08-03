@@ -28,7 +28,7 @@ A format converter consists of
 <ul>
  <li>The <code>%</code> character</li>
  <li>Optionally a field name in <code>()</code></li>
- <li>Optionally flags out of the characters <code>*# +0-</code></li>
+ <li>Optionally flags out of the characters <code>*# +0-?</code></li>
  <li>Optionally an integer <em>width</em> field</li>
  <li>Optionally a period character (<code>.</code>) followed
      by an integer <em>precision</em> field (input ony for most formats)</li>
@@ -61,6 +61,8 @@ The <code>0</code> flag says that numbers should be left padded with
 The <code>-</code> flag specifies that output is left justified if
 <em>width</em> is larger than required.
 </p>
+The <code>?</code> flag makes failing input conversions succeed with
+a default zero value (0, 0.0, or "", depending on the format type).
 
 <h3>Examples:</h3>
 <table>
@@ -83,6 +85,10 @@ The <code>-</code> flag specifies that output is left justified if
  <tr>
   <td><code>in "%*i";</code></td>
   <td>skipped integer number</td>
+ </tr>
+ <tr>
+  <td><code>in "%?d";</code></td>
+  <td>decimal number or nothing (read as 0)</td>
  </tr>
 </table>
 
@@ -217,7 +223,11 @@ to <code>z</code>.
 This format maps an unsigned integer value on a set of strings.
 The value 0 corresponds to <em>string0</em> and so on.
 The strings are separated by <code>|</code>.
-If one of the strings contains <code>|</code> or <code>}</code>,
+When using the <code>#</code> flag it is allowed to assign integer values
+to the strings using <code>=</code>.
+Example: <code>%#{neg=-1|pos=1}</code>.
+If one of the strings contains <code>|</code> or <code>}</code>
+(or <code>=</code>  if the <code>#</code> flag is used)
 a <code>\</code> must be used to escape the character.
 </p>
 <p>
