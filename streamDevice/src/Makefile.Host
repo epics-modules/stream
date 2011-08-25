@@ -39,4 +39,7 @@ include $(TOP)/config/RULES.Host
 
 # create stream.dbd from all RECORDS
 stream.dbd: ../CONFIG_STREAM
-	perl $(TOP)/makeStreamDBD.pl 5 $@ $(RECORDS_3_13)
+	@for r in $(RECORDS_3_13); \
+	do echo "device($$r,INST_IO,dev$${r}Stream,\"stream\")"; \
+	done > $@
+	@echo "driver(stream)" >> $@
