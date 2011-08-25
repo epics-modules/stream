@@ -30,6 +30,8 @@ SYNAPPS_RECORDS += scalcout
 # asynDriver interface is added automatically
 # if ASYN is defined in your RELEASE file.
 # BUSSES += Debug
+BUSSES += Debug
+BUSSES += Dummy
 
 # You may add more format converters
 # This requires the naming convention
@@ -42,6 +44,7 @@ FORMATS += RawFloat
 FORMATS += Binary
 FORMATS += Checksum
 FORMATS += MantissaExponent
+FORMATS += Timestamp
 
 # Want Perl regular expression matching?
 # If PCRE is installed at the same location for all
@@ -65,10 +68,6 @@ endif
 # at the end replace the line "IoccrfReg iocshReg;"
 # by "static IoccrfReg iocshReg;"
 # LOADABLE_MODULE = YES
-
-# Want to add some memory tracing
-# to find memory leaks?
-# USE_MEMGUARD = YES
 
 # Sources of Stream Kernel
 # Do not modify
