@@ -488,6 +488,8 @@ static checksum checksumMap[] =
     {"crc16r",  crc_0x8005_r,     0x0000,     0x0000,     2}, // 0xBB3D
     {"ccitt16", crc_0x1021,       0xFFFF,     0x0000,     2}, // 0x29B1
     {"ccitt16a",crc_0x1021,       0x1D0F,     0x0000,     2}, // 0xE5CC
+    {"ccitt16x",crc_0x1021,       0x0000,     0x0000,     2}, // 0x31C3
+    {"crc16c",  crc_0x1021,       0x0000,     0x0000,     2}, // 0x31C3
     {"crc32",   crc_0x04C11DB7,   0xFFFFFFFF, 0xFFFFFFFF, 4}, // 0xFC891918
     {"crc32r",  crc_0x04C11DB7_r, 0xFFFFFFFF, 0xFFFFFFFF, 4}, // 0xCBF43926
     {"jamcrc",  crc_0x04C11DB7_r, 0xFFFFFFFF, 0x00000000, 4}, // 0x340BC6D9
@@ -542,9 +544,9 @@ printPseudo(const StreamFormat& format, StreamBuffer& output)
     debug("ChecksumConverter %s: output to check: \"%s\"\n",
         checksumMap[fnum].name, output.expand(start,length)());
 
-    sum = checksumMap[fnum].xorout ^ (checksumMap[fnum].func(
+    sum = checksumMap[fnum].xorout ^ checksumMap[fnum].func(
         reinterpret_cast<uchar*>(output(start)), length,
-        checksumMap[fnum].init) & mask[checksumMap[fnum].bytes]);
+        checksumMap[fnum].init) & mask[checksumMap[fnum].bytes];
 
     debug("ChecksumConverter %s: output checksum is 0x%lX\n",
         checksumMap[fnum].name, sum);
@@ -603,9 +605,9 @@ scanPseudo(const StreamFormat& format, StreamBuffer& input, long& cursor)
         return -1;
     }
 
-    sum = checksumMap[fnum].xorout ^ (checksumMap[fnum].func(
+    sum = checksumMap[fnum].xorout ^ checksumMap[fnum].func(
         reinterpret_cast<uchar*>(input(start)), length,
-        checksumMap[fnum].init) & mask[checksumMap[fnum].bytes]);
+        checksumMap[fnum].init) & mask[checksumMap[fnum].bytes];
 
     debug("ChecksumConverter %s: input checksum is 0x%0*lX\n",
         checksumMap[fnum].name, 2*checksumMap[fnum].bytes, sum);
