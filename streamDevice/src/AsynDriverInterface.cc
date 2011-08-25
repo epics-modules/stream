@@ -129,11 +129,9 @@ static const char* asynStatusStr[] = {
     "asynSuccess", "asynTimeout", "asynOverflow", "asynError"
 };
 
-#ifndef NO_TEMPORARY
 static const char* eomReasonStr[] = {
     "NONE", "CNT", "EOS", "CNT+EOS", "END", "CNT+END", "EOS+END", "CNT+EOS+END"
 };
-#endif
 
 class AsynDriverInterface : StreamBusInterface
 #ifdef EPICS_3_14
@@ -536,6 +534,15 @@ lockHandler()
     debug("AsynDriverInterface::lockHandler(%s)\n",
         clientName());
     pasynManager->blockProcessCallback(pasynUser, false);
+    
+#ifndef ASYN_VERSION // asyn < 4.14
+    asynStatus status;
+    status = pasynManager->lockPort(pasynUser);
+    if(status!=asynSuccess) {
+        debug("Failed locking port");
+    }
+#endif
+
     connected = connectToAsynPort();
     lockCallback(connected ? StreamIoSuccess : StreamIoFault);
 }
@@ -546,6 +553,15 @@ unlock()
 {
     debug("AsynDriverInterface::unlock(%s)\n",
         clientName());
+
+#ifndef ASYN_VERSION // asyn < 4.14
+    asynStatus status;
+    status = pasynManager->unlockPort(pasynUser);
+    if (status != asynSuccess) {
+        debug("Failed unlocking port");
+    }
+#endif
+    
     pasynManager->unblockProcessCallback(pasynUser, false);
     return true;
 }
@@ -665,13 +681,20 @@ writeHandler()
                 clientName(), pasynUser->errorMessage);
             writeCallback(StreamIoFault);
             return;
+#ifdef ASYN_VERSION // asyn >= 4.14
         case asynDisconnected:
             error("%s: asynDisconnected in write: %s\n",
                 clientName(), pasynUser->errorMessage);
             writeCallback(StreamIoFault);
             return;
         case asynDisabled:
-            error("%s: asynDisabled in write: %s\n",
+            error("%s: asynDisconnected in write: %s\n",
+                clientName(), pasynUser->errorMessage);
+            writeCallback(StreamIoFault);
+            return;
+#endif
+        default:
+            error("%s: unknown asyn error in write: %s\n",
                 clientName(), pasynUser->errorMessage);
             writeCallback(StreamIoFault);
             return;
@@ -818,6 +841,16 @@ readHandler()
                 asynStatusStr[status]);
         }
         // pasynOctet->read() has already cut off terminator.
+        
+        if (status == asynTimeout &&
+            pasynUser->timeout == 0.0 &&
+            received > 0)
+        {
+            // Jens Eden (PTB) pointed out that polling asynInterposeEos
+            // with timeout = 0.0 returns asynTimeout even when bytes
+            // have been received, but not yet the terminator.               
+            status = asynSuccess;
+        }
 
         switch (status)
         {
@@ -899,8 +932,8 @@ readHandler()
                 // read timeout
 #ifndef NO_TEMPORARY
                 debug("AsynDriverInterface::readHandler(%s): "
-                        "ioAction=%s, timeout after %d of %d bytes \"%s\"\n",
-                    clientName(), ioActionStr[ioAction],
+                        "ioAction=%s, timeout [%f seconds] after %d of %d bytes \"%s\"\n",
+                    clientName(), ioActionStr[ioAction], pasynUser->timeout,
                     (int)received, bytesToRead,
                     StreamBuffer(buffer, received).expand()());
 #endif
@@ -934,15 +967,23 @@ readHandler()
                     clientName(), pasynUser->errorMessage);
                 readCallback(StreamIoFault, buffer, received);
                 break;
+#ifdef ASYN_VERSION // asyn >= 4.14
             case asynDisconnected:
                 error("%s: asynDisconnected in read: %s\n",
                     clientName(), pasynUser->errorMessage);
-                readCallback(StreamIoFault, buffer, received);
+                writeCallback(StreamIoFault);
                 return;
             case asynDisabled:
-                error("%s: asynDisabled in read: %s\n",
+                error("%s: asynDisconnected in read: %s\n",
                     clientName(), pasynUser->errorMessage);
-                readCallback(StreamIoFault, buffer, received);
+                writeCallback(StreamIoFault);
+                return;
+#endif
+            default:
+                error("%s: unknown asyn error in read: %s\n",
+                    clientName(), pasynUser->errorMessage);
+                writeCallback(StreamIoFault);
+                return;
         }
         if (!readMore) break;
         if (readMore > 0)
