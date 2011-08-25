@@ -28,7 +28,7 @@ A format converter consists of
 <ul>
  <li>The <code>%</code> character</li>
  <li>Optionally a field name in <code>()</code></li>
- <li>Optionally flags out of the characters <code>*# +0-?</code></li>
+ <li>Optionally flags out of the characters <code>*# +0-</code></li>
  <li>Optionally an integer <em>width</em> field</li>
  <li>Optionally a period character (<code>.</code>) followed
      by an integer <em>precision</em> field (input ony for most formats)</li>
@@ -61,8 +61,6 @@ The <code>0</code> flag says that numbers should be left padded with
 The <code>-</code> flag specifies that output is left justified if
 <em>width</em> is larger than required.
 </p>
-The <code>?</code> flag makes failing input conversions succeed with
-a default zero value (0, 0.0, or "", depending on the format type).
 
 <h3>Examples:</h3>
 <table>
@@ -85,10 +83,6 @@ a default zero value (0, 0.0, or "", depending on the format type).
  <tr>
   <td><code>in "%*i";</code></td>
   <td>skipped integer number</td>
- </tr>
- <tr>
-  <td><code>in "%?d";</code></td>
-  <td>decimal number or nothing (read as 0)</td>
  </tr>
 </table>
 
@@ -223,11 +217,7 @@ to <code>z</code>.
 This format maps an unsigned integer value on a set of strings.
 The value 0 corresponds to <em>string0</em> and so on.
 The strings are separated by <code>|</code>.
-When using the <code>#</code> flag it is allowed to assign integer values
-to the strings using <code>=</code>.
-Example: <code>%#{neg=-1|pos=1}</code>.
-If one of the strings contains <code>|</code> or <code>}</code>
-(or <code>=</code>  if the <code>#</code> flag is used)
+If one of the strings contains <code>|</code> or <code>}</code>,
 a <code>\</code> must be used to escape the character.
 </p>
 <p>
@@ -258,11 +248,12 @@ Examples: <code>%B.!</code> or <code>%B\x00\xff</code>.
 <code>%B01</code> is equivalent to <code>%b</code>.
 </p>
 <p>
-In output, if <em>width</em> is larger than the number of significant bits,
+If in output <em>width</em> is larger than the number of significant bits,
 then the flag <code>0</code> means that the value should be padded with
 with the chosen zero character instead of spaces.
 If <em>precision</em> is set, it means the number of significant bits.
 Otherwise, the highest 1 bit defines the number of significant bits. 
+There is no alternate format when <code>#</code> is used.
 </p>
 <p>
 In input, leading spaces are skipped.
@@ -299,21 +290,8 @@ the value is sign extended or zero extended, depending on the
 <code>0</code> flag.
 </p>
 
-<a name="rawdouble"></a>
-<h2>10. Raw DOUBLE Converter (<code>%R</code>)</h2>
-<p>
-The raw converter does not really "convert".
-A float or double value is written or read in the internal
-(maybe IEEE) representation of the computer.
-The normal byte order is <em>big endian</em>, i.e. most significant byte
-first.
-With the <code>#</code> flag, the byte order is changed to <em>little
-endian</em>, i.e. least significant byte first.
-The <em>width</em> must be 4 (float) or 8 (double). The default is 4.
-</p>
-
 <a name="bcd"></a>
-<h2>11. Packed BCD (Binary Coded Decimal) LONG Converter (<code>%D</code>)</h2>
+<h2>10. Packed BCD (Binary Coded Decimal) LONG Converter (<code>%D</code>)</h2>
 <p>
 Packed BCD is a format where each byte contains two binary coded
 decimal digits (<code>0</code> ... <code>9</code>).
@@ -342,7 +320,7 @@ than 9.
 </p>
 
 <a name="chksum"></a>
-<h2>12. Checksum Pseudo-Converter (<code>%&lt;<em>checksum</em>&gt;</code>)</h2>
+<h2>11. Checksum Pseudo-Converter (<code>%&lt;<em>checksum</em>&gt;</code>)</h2>
 <p>
 This is not a normal "converter", because no user data is converted.
 Instead, a checksum is calculated from the input or output.
@@ -480,29 +458,23 @@ the title of an HTML page, skipps anything before the
 <code>&lt;title&gt</code> tag and leaves anything after the
 <code>&lt;/title&gt;</code> tag in the input buffer.
 </p>
-<a name="mantexp"></a>
-<h2>13. MantissaExponent DOUBLE converter (<code>%m</code>)</h2>
+<a name="exp"></a>
+<h2>13. Exponential DOUBLE converter (<code>%m</code>)</h2>
 <p>
-This exotic and experimental format matches numbers in the format
-<i>[sign] mantissa sign exponent</i>, e.g <code>+123-4</code> meaning
-123e-4 or 0.0123. Mantissa and exponent are decimal integers.
-The sign of the mantissa is optional.
-Compared to the standard <code>%e</code> format, this format does not
-contain the characters <code>.</code> and <code>e</code>.
+This experimental input-only format matches numbers in the format
+<i>[sign] mantissa sign exponent<i>, e.g <code>+123-4</code> meaning
+123e-4 or 0.0123. Mantissa and exponent are integers. The sign of the
+mantissa is optional. Compared to the standard <code>%e</code> format,
+this format does not contain the characters <code>.</code> and <code>e</code>.
 </p>
 <p>
 Output formatting is ambigous (e.g. <code>123-4</code> versus
-<code>1230-5</code>). I chose the following convention:
-Format <em>precision</em> defines number of digits in mantissa.
-No leading '0' in mantissa (except for 0.0 of course).
-Number of digits in exponent is at least 2.
-Format flags <code>+</code>, <code>-</code>, and space are supported in
-the usual way (always sign, left justified, space instead of + sign).
-Flags <code>#</code> and <code>0</code> are unsupported.
+<code>1230-5</code>). Until it has been specified how to handle this,
+output is not supported.
 </p>
 <hr>
 <p align="right"><a href="processing.html">Next: Record Processing</a></p>
-<p><small>Dirk Zimoch, 2008</small></p>
+<p><small>Dirk Zimoch, 2007</small></p>
 <script src="stream.js" type="text/javascript"></script>
 </body>
 </html>
