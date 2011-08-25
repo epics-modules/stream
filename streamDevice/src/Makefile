@@ -34,9 +34,9 @@ include $(TOP)/configure/CONFIG
 -include CONFIG_STREAM
 -include ../CONFIG_STREAM
 
-LIBRARY_IOC = stream
+LIBRARY_DEFAULT = stream
 
-DBD += $(LIBRARY_IOC).dbd
+DBD += $(LIBRARY_DEFAULT).dbd
 
 ifdef ASYN
 LIB_LIBS += asyn
@@ -50,7 +50,7 @@ endif
 endif
 
 ifeq ($(LOADABLE_MODULE),YES)
-SRCS += $(LIBRARY_IOC)_registerRecordDeviceDriver.cpp
+SRCS += $(LIBRARY_DEFAULT)_registerRecordDeviceDriver.cpp
 endif 
 SRCS += $(BUSSES:%=%Interface.cc)
 SRCS += $(FORMATS:%=%Converter.cc)
@@ -72,34 +72,36 @@ endif
 
 LIB_LIBS += $(EPICS_BASE_IOC_LIBS)
 
-ifeq ($(USE_MEMGUARD),YES)
-# memguard looks for memory leaks (gcc only)
-CPPFLAGS += -include ../memguard.h
-LIB_SRCS += memguard.cc
-endif
-
 INC += devStream.h
 
 include $(TOP)/configure/RULES
 
 # Update version string (contains __DATE__ and __TIME__)
 # each time make runs.
-#StreamVersion$(OBJ): FORCE
-#FORCE:
+StreamVersion$(OBJ): FORCE
+FORCE:
 
 # Add references to all registrars to main file to avoid
 # missing initialization.
 StreamCore$(OBJ): streamReferences
 
 streamReferences: ../CONFIG_STREAM
-	perl $(TOP)/makeStreamDBD.pl 3 $@ $(BUSSES)
-	perl $(TOP)/makeStreamDBD.pl 4 $@ $(FORMATS)
+	@for i in $(BUSSES); \
+	do echo "extern void* ref_$${i}Interface;"; \
+           echo "void* p$$i = ref_$${i}Interface;"; \
+	done > $@
+	@for i in $(FORMATS); \
+	do echo "extern void* ref_$${i}Converter;"; \
+           echo "void* p$$i = ref_$${i}Converter;"; \
+	done >> $@
 
 # create stream.dbd from all RECORDS
-$(COMMON_DIR)/$(LIBRARY_IOC).dbd: ../CONFIG_STREAM
-	perl $(TOP)/makeStreamDBD.pl 1 $@ $(RECORDS)
-
-$(LIBRARY_IOC).dbd$(DEP):
-	@echo "$@: ../CONFIG_STREAM" >> $@
+$(COMMON_DIR)/$(LIBRARY_DEFAULT).dbd: ../CONFIG_STREAM
+	@for r in $(RECORDS); \
+	do echo "device($$r,INST_IO,dev$${r}Stream,\"stream\")"; \
+	done > $@
+	@echo "driver(stream)" >> $@
+	@echo "variable(streamDebug, int)" >> $@
+	@echo "registrar(streamRegistrar)" >> $@
 
 endif
