@@ -67,7 +67,7 @@ SHRLIB_DEPLIB_DIRS += $(PCRE_LIB)
 endif
 endif
 
-# cygwin 1.5 needs rpc, cygwin 1.7 needs tirp
+# cygwin 1.5 needs librpc, cygwin 1.7 needs libtirpc
 PROD_SYS_LIBS_cygwin32 += $(CYGWIN_RPC_LIB)
 
 PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
