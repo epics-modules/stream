@@ -34,6 +34,7 @@ streamApp_DBD += asynRegistrars.dbd
 # add asynRecord.dbd if you like
 streamApp_DBD += asynRecord.dbd
 PROD_LIBS += asyn
+PROD_SYS_LIBS_cygwin32 += $(CYGWIN_RPC_LIB)
 endif
 
 ifneq ($(words $(CALC) $(SYNAPPS)), 0)
