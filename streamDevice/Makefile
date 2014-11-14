@@ -19,6 +19,9 @@ else
   endif
 endif
 
-DIRS += streamApp
+# tmm: try this for RTEMS build, because the dependence of calc
+# on the sequencer would make stream depend on the sequencer, but
+# only if stream makes an executable
+#DIRS += streamApp
 
 include $(CONFIG)/RULES_DIRS
