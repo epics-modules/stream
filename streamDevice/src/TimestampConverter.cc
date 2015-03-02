@@ -29,7 +29,13 @@
 #ifdef _WIN32
 #define tzset() _tzset()
 #define timezone _timezone
-#define localtime_r(timet,tm) localtime_s(tm,timet) /* Windows sucks */
+
+/* Windows sucks */
+#if defined(__MINGW32__) || defined(__MINGW64__)
+    #define localtime_r(timet,tm) localtime(timet)
+#else
+    #define localtime_r(timet,tm) localtime_s(tm,timet) 
+#endif
 #endif
 
 #ifdef __rtems__
