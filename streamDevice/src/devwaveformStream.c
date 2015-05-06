@@ -18,11 +18,12 @@
 *                                                              *
 ***************************************************************/
 
-#include "devStream.h"
+#include <dbAccess.h>
 #include <waveformRecord.h>
 #include <string.h>
 #include <errlog.h>
 #include <epicsExport.h>
+#include "devStream.h"
 
 static long readData (dbCommon *record, format_t *format)
 {

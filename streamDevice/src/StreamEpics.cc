@@ -18,10 +18,6 @@
 *                                                              *
 ***************************************************************/
 
-#include "devStream.h"
-#include "StreamCore.h"
-#include "StreamError.h"
-
 #include <epicsVersion.h>
 #ifdef BASE_VERSION
 #define EPICS_3_13
@@ -48,6 +44,9 @@ extern "C" {
 #include <semLib.h>
 #include <wdLib.h>
 #include <taskLib.h>
+#include "devStream.h"
+#include "StreamCore.h"
+#include "StreamError.h"
 
 extern DBBASE *pdbbase;
 
@@ -60,6 +59,7 @@ extern DBBASE *pdbbase;
 #include <epicsEvent.h>
 #include <epicsTime.h>
 #include <epicsThread.h>
+#include <dbAccess.h>
 #include <registryFunction.h>
 #include <iocsh.h>
 
@@ -73,6 +73,9 @@ epicsShareFunc int epicsShareAPI iocshCmd(const char *command);
 #endif
 
 #include <epicsExport.h>
+#include "devStream.h"
+#include "StreamCore.h"
+#include "StreamError.h"
 
 #endif
 

@@ -19,10 +19,11 @@
 *                                                              *
 ***************************************************************/
 
-#include "devStream.h"
+#include <dbAccess.h>
 #include <mbboRecord.h>
 #include <string.h>
 #include <epicsExport.h>
+#include "devStream.h"
 
 static long readData (dbCommon *record, format_t *format)
 {
