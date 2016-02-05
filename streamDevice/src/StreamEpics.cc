@@ -944,8 +944,8 @@ getFieldAddress(const char* fieldname, StreamBuffer& address)
     else
     {
         // FIELD in this record or VAL in other record
-        size_t fullnameLen = PVNAME_SZ + 1;
-        char fullname[fullnameLen];
+        char fullname[PVNAME_SZ + 1];
+        const size_t fullnameLen = sizeof(fullname);
         snprintf(fullname, fullnameLen, "%s.%s", name(), fieldname);
         if (dbNameToAddr(fullname, &dbaddr) != OK)
         {
