@@ -13,3 +13,7 @@ The synApps stream module is a wrapper around
 the StreamDevice support from PSI.
 Refer to  http://epics.web.psi.ch/software/streamdevice
 to obtain the StreamDevice source.
+
+**NOTE**: Please do not post issues or pull requests for 
+StreamDevice in this GitHub repository.  
+See the web page at PSI for how to give feedback on StreamDevice.
