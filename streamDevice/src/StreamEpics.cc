@@ -62,6 +62,7 @@ extern DBBASE *pdbbase;
 #include <dbAccess.h>
 #include <registryFunction.h>
 #include <iocsh.h>
+#include <epicsStdio.h>
 
 #if EPICS_MODIFICATION<9
 extern "C" {
@@ -946,11 +947,11 @@ getFieldAddress(const char* fieldname, StreamBuffer& address)
         // FIELD in this record or VAL in other record
         char fullname[PVNAME_SZ + 6];
         const size_t fullnameLen = sizeof(fullname);
-        snprintf(fullname, fullnameLen, "%s.%s", name(), fieldname);
+        epicsSnprintf(fullname, fullnameLen, "%s.%s", name(), fieldname);
         if (dbNameToAddr(fullname, &dbaddr) != OK)
         {
             // VAL in other record
-            snprintf(fullname, fullnameLen, "%s.VAL", fieldname);
+            epicsSnprintf(fullname, fullnameLen, "%s.VAL", fieldname);
             if (dbNameToAddr(fullname, &dbaddr) != OK) return false;
         }
     }
