@@ -17,5 +17,7 @@ ifdef T_A
 -include $(TOP)/configure/O.$(T_A)/CONFIG_APP_INCLUDE
 endif
 
+TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
+
 # dbst based database optimization (default: NO)
 DB_OPT = NO
