@@ -11,9 +11,9 @@ refer to http://www.aps.anl.gov/bcda/synApps/license.php
 
 The synApps stream module is a wrapper around
 the StreamDevice support from PSI.
-Refer to  http://epics.web.psi.ch/software/streamdevice
+Refer to  https://github.com/paulscherrerinstitute/StreamDevice
 to obtain the StreamDevice source.
 
 **NOTE**: Please do not post issues or pull requests for 
-StreamDevice in this GitHub repository.  
-See the web page at PSI for how to give feedback on StreamDevice.
+StreamDevice in this GitHub repository. Use the PSI github repo
+instead.
