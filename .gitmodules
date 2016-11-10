@@ -1,0 +1,3 @@
+[submodule "StreamDevice"]
+	path = StreamDevice
+	url = https://github.com/paulscherrerinstitute/StreamDevice.git
