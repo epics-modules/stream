@@ -14,6 +14,13 @@ the StreamDevice support from PSI.
 Refer to  https://github.com/paulscherrerinstitute/StreamDevice
 to obtain the StreamDevice source.
 
+When cloning this repository, you will have to run 
+    git submodule init
+and then
+    git submodule update
+in the StreamDevice folder in order to sucessfully pull
+the code from the Streams PSI repository.
+
 **NOTE**: Please do not post issues or pull requests for 
 StreamDevice in this GitHub repository. Use the PSI github repo
 instead.
