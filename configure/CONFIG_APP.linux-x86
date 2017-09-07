@@ -1,0 +1,4 @@
+BUILD_PCRE=NO
+
+PCRE_INCLUDE=/usr/include/pcre
+PCRE_LIB=/usr/lib
