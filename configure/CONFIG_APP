@@ -17,6 +17,8 @@ ifdef T_A
 -include $(TOP)/configure/O.$(T_A)/CONFIG_APP_INCLUDE
 
 BUILD_PCRE=YES
+
+#Comment both of these lines out to disable regex support
 PCRE_LIB=$(TOP)/lib/$(T_A)
 PCRE_INCLUDE=$(TOP)/include
 
