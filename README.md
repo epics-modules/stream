@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/epics-modules/stream.svg?branch=master)](https://travis-ci.org/epics-modules/stream)
+
 # stream
 APS BCDA synApps module: stream
 
