@@ -1,0 +1,5 @@
+BUILD_PCRE=NO
+
+#Comment both of these lines out to disable regex support
+PCRE_INCLUDE=/usr/include/pcre
+PCRE_LIB=/usr/lib
