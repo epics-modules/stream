@@ -1,4 +1,0 @@
-BUILD_PCRE=NO
-
-undefine PCRE_LIB
-undefine PCRE_INCLUDE

@@ -1,5 +1,12 @@
+#To build PCRE from the build included in the module,
+#change to BUILD_PCRE=YES and change the PCRE definitions
+
+#To disable PCRE support, just delete this file
+
 BUILD_PCRE=NO
 
-#Comment both of these lines out to disable regex support
 PCRE_INCLUDE=/usr/include/pcre
 PCRE_LIB=/usr/lib
+
+#PCRE_LIB=$(TOP)/lib/$(T_A)
+#PCRE_INCLUDE=$(TOP)/include
