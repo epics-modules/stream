@@ -34,11 +34,3 @@ CHECK_RELEASE = YES
 #   or CROSS_OPT settings from base/configure/CONFIG_SITE
 #HOST_OPT = NO
 #CROSS_OPT = NO
-
-ifdef T_A
- BUILD_PCRE=YES
-
- #Comment both of these lines out to disable regex support
- PCRE_LIB=$(TOP)/lib/$(T_A)
- PCRE_INCLUDE=$(TOP)/include
-endif

@@ -1,5 +1,4 @@
-BUILD_PCRE=NO
+#To enable regex support, uncomment these lines
 
-#Comment both of these lines out to disable regex support
-PCRE_INCLUDE=/usr/include/pcre
-PCRE_LIB=/usr/lib
+#PCRE_INCLUDE=/usr/include/pcre
+#PCRE_LIB=/usr/lib
