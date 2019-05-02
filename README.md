@@ -1,3 +1,9 @@
+# !!This Is A Deprecated Module!!
+
+This module was just a wrapper around the StreamDevice support from PSI. Since the last release, the PSI support has been expanded into a full-fledged EPICS module. This repository is no longer necessary and won't be updated.
+
+---
+
 [![Build Status](https://travis-ci.org/epics-modules/stream.svg?branch=master)](https://travis-ci.org/epics-modules/stream)
 
 # stream
