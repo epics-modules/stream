@@ -1,6 +1,10 @@
 # !!This Is A Deprecated Module!!
 
-This module was just a wrapper around the StreamDevice support from PSI. Since the last release, the PSI support has been expanded into a full-fledged EPICS module. This repository is no longer necessary and won't be updated.
+This module was just a wrapper around the StreamDevice support from PSI. Since the last release, the PSI support has been expanded into a [full-fledged EPICS module](https://github.com/paulscherrerinstitute/StreamDevice). This repository is no longer necessary and won't be updated.
+
+Please visit the new repository:
+
+https://github.com/paulscherrerinstitute/StreamDevice
 
 ---
 
